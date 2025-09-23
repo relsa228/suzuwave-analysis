@@ -1,9 +1,4 @@
-use crate::app::App;
-
-pub mod app;
-pub mod components;
-pub mod models;
-pub mod states;
+use suzuwave::app::App;
 
 fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;

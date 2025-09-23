@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc, sync::Arc};
+
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use ratatui::{
@@ -6,21 +8,25 @@ use ratatui::{
     widgets::{Block, Borders},
 };
 
-use crate::states::app::ApplicationState;
+use crate::{components::command_console::CommandConsoleComponent, states::app::ApplicationState};
 
 pub struct App {
-    application_state: ApplicationState,
+    application_state: Rc<RefCell<ApplicationState>>,
+
+    command_console: CommandConsoleComponent,
 }
 
 impl App {
     pub fn new() -> Self {
+        let application_state = Rc::new(RefCell::new(ApplicationState::new()));
         Self {
-            application_state: ApplicationState::new(),
+            application_state: application_state.clone(),
+            command_console: CommandConsoleComponent::new(application_state),
         }
     }
 
     pub fn run(mut self, mut terminal: DefaultTerminal) -> Result<()> {
-        while self.application_state.is_running() {
+        while self.application_state.borrow().running() {
             terminal.draw(|f| {
                 let size = f.area();
                 let main_chunks = Layout::default()
@@ -49,10 +55,8 @@ impl App {
                     Block::default().title("Graphic View").borders(Borders::ALL),
                     workspace_chunks[1],
                 );
-                f.render_widget(
-                    Block::default().title("Command").borders(Borders::ALL),
-                    workspace_chunks[2],
-                );
+
+                self.command_console.render(f, workspace_chunks[2]);
             })?;
             self.handle_crossterm_events()?;
         }
@@ -61,7 +65,13 @@ impl App {
 
     fn handle_crossterm_events(&mut self) -> Result<()> {
         match event::read()? {
-            Event::Key(key) if key.kind == KeyEventKind::Press => self.on_key_event(key),
+            Event::Key(key) if key.kind == KeyEventKind::Press => {
+                if self.application_state.borrow().input_mode() {
+                    self.command_console.handle_key_events(key);
+                } else {
+                    self.handle_key_events(key);
+                }
+            }
             Event::Mouse(_) => {}
             Event::Resize(_, _) => {}
             _ => {}
@@ -69,15 +79,13 @@ impl App {
         Ok(())
     }
 
-    fn on_key_event(&mut self, key: KeyEvent) {
+    fn handle_key_events(&mut self, key: KeyEvent) {
         match (key.modifiers, key.code) {
             (KeyModifiers::CONTROL, KeyCode::Char('c') | KeyCode::Char('C')) => {
-                self.application_state.quit()
+                self.application_state.borrow_mut().quit()
             }
-            (_, KeyCode::Esc) => {
-                if !self.application_state.is_static_mode() {
-                    self.application_state.to_static_mode();
-                }
+            (_, KeyCode::Char('i') | KeyCode::Char('I')) => {
+                self.application_state.borrow_mut().to_input_mode()
             }
             // Add other key handlers here.
             _ => {}
