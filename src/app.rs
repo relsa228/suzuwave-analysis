@@ -6,19 +6,21 @@ use ratatui::{
     widgets::{Block, Borders},
 };
 
-#[derive(Debug, Default)]
+use crate::states::app::ApplicationState;
+
 pub struct App {
-    running: bool,
+    application_state: ApplicationState,
 }
 
 impl App {
     pub fn new() -> Self {
-        Self::default()
+        Self {
+            application_state: ApplicationState::new(),
+        }
     }
 
     pub fn run(mut self, mut terminal: DefaultTerminal) -> Result<()> {
-        self.running = true;
-        while self.running {
+        while self.application_state.is_running() {
             terminal.draw(|f| {
                 let size = f.area();
                 let main_chunks = Layout::default()
@@ -69,14 +71,16 @@ impl App {
 
     fn on_key_event(&mut self, key: KeyEvent) {
         match (key.modifiers, key.code) {
-            (_, KeyCode::Esc | KeyCode::Char('q'))
-            | (KeyModifiers::CONTROL, KeyCode::Char('c') | KeyCode::Char('C')) => self.quit(),
+            (KeyModifiers::CONTROL, KeyCode::Char('c') | KeyCode::Char('C')) => {
+                self.application_state.quit()
+            }
+            (_, KeyCode::Esc) => {
+                if !self.application_state.is_static_mode() {
+                    self.application_state.to_static_mode();
+                }
+            }
             // Add other key handlers here.
             _ => {}
         }
-    }
-
-    fn quit(&mut self) {
-        self.running = false;
     }
 }
