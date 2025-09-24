@@ -8,12 +8,18 @@ use ratatui::{
     widgets::{Block, Borders},
 };
 
-use crate::{components::command_console::CommandConsoleComponent, states::app::ApplicationState};
+use crate::{
+    components::{
+        command_console::CommandConsoleComponent, graphic_widget::GraphicWidgetComponent,
+    },
+    states::app::ApplicationState,
+};
 
 pub struct App {
     application_state: Rc<RefCell<ApplicationState>>,
 
     command_console: CommandConsoleComponent,
+    graphic_widget: GraphicWidgetComponent,
 }
 
 impl App {
@@ -22,6 +28,7 @@ impl App {
         Self {
             application_state: application_state.clone(),
             command_console: CommandConsoleComponent::new(application_state),
+            graphic_widget: GraphicWidgetComponent::new(),
         }
     }
 
@@ -37,7 +44,7 @@ impl App {
 
                 let workspace_chunks = Layout::default()
                     .direction(Direction::Vertical)
-                    .constraints([Constraint::Max(2), Constraint::Min(5), Constraint::Max(3)])
+                    .constraints([Constraint::Min(5), Constraint::Max(3)])
                     .split(main_chunks[1]);
 
                 f.render_widget(
@@ -47,16 +54,8 @@ impl App {
                     main_chunks[0],
                 );
 
-                f.render_widget(
-                    Block::default().title("View tabs").borders(Borders::ALL),
-                    workspace_chunks[0],
-                );
-                f.render_widget(
-                    Block::default().title("Graphic View").borders(Borders::ALL),
-                    workspace_chunks[1],
-                );
-
-                self.command_console.render(f, workspace_chunks[2]);
+                self.graphic_widget.render(f, workspace_chunks[0]);
+                self.command_console.render(f, workspace_chunks[1]);
             })?;
             self.handle_crossterm_events()?;
         }
@@ -66,6 +65,7 @@ impl App {
     fn handle_crossterm_events(&mut self) -> Result<()> {
         match event::read()? {
             Event::Key(key) if key.kind == KeyEventKind::Press => {
+                self.graphic_widget.handle_key_events(key);
                 if self.application_state.borrow().input_mode() {
                     self.command_console.handle_key_events(key);
                 } else {

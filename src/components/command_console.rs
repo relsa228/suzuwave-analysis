@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc, sync::Arc};
+use std::{cell::RefCell, rc::Rc};
 
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
@@ -38,7 +38,7 @@ impl CommandConsoleComponent {
                 self.state.pop_char();
             }
             (_, KeyCode::Enter) => {
-                let command = self.state.input_and_flush();
+                let _command = self.state.input_and_flush();
                 self.state.push_char(':');
                 // Send the command
             }
