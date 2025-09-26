@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc, sync::Arc};
+use std::{cell::RefCell, rc::Rc};
 
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
@@ -9,9 +9,7 @@ use ratatui::{
 };
 
 use crate::{
-    components::{
-        command_console::CommandConsoleComponent, graphic_widget::GraphicWidgetComponent,
-    },
+    components::{command_console::CommandConsoleComponent, graphic_view::GraphicViewComponent},
     states::app::ApplicationState,
 };
 
@@ -19,7 +17,7 @@ pub struct App {
     application_state: Rc<RefCell<ApplicationState>>,
 
     command_console: CommandConsoleComponent,
-    graphic_widget: GraphicWidgetComponent,
+    graphic_widget: GraphicViewComponent,
 }
 
 impl App {
@@ -28,7 +26,7 @@ impl App {
         Self {
             application_state: application_state.clone(),
             command_console: CommandConsoleComponent::new(application_state),
-            graphic_widget: GraphicWidgetComponent::new(),
+            graphic_widget: GraphicViewComponent::new(),
         }
     }
 
@@ -39,7 +37,12 @@ impl App {
                 let main_chunks = Layout::default()
                     .direction(Direction::Horizontal)
                     .margin(1)
-                    .constraints([Constraint::Percentage(15), Constraint::Percentage(85)])
+                    .constraints([
+                        Constraint::Percentage(
+                            self.application_state.borrow().file_explorer_size(),
+                        ),
+                        Constraint::Percentage(self.application_state.borrow().workspace_size()),
+                    ])
                     .split(size);
 
                 let workspace_chunks = Layout::default()
@@ -85,6 +88,7 @@ impl App {
                 self.application_state.borrow_mut().quit()
             }
             (_, KeyCode::Char('i') | KeyCode::Char('I')) => {
+                self.command_console.to_input_mode();
                 self.application_state.borrow_mut().to_input_mode()
             }
             // Add other key handlers here.

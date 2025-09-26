@@ -1,11 +1,15 @@
+use crate::models::command_console::style::CommandConsoleStyle;
+
 pub struct CommandConsoleState {
     input: String,
+    style: CommandConsoleStyle,
 }
 
 impl CommandConsoleState {
     pub fn new() -> Self {
         Self {
-            input: String::new(),
+            input: String::from(":"),
+            style: CommandConsoleStyle::new(),
         }
     }
 
@@ -19,6 +23,7 @@ impl CommandConsoleState {
 
     pub fn flush_input(&mut self) {
         self.input.clear();
+        self.input.push(':');
     }
 
     pub fn input_and_flush(&mut self) -> String {
@@ -29,5 +34,13 @@ impl CommandConsoleState {
 
     pub fn input(&self) -> &str {
         &self.input
+    }
+
+    pub fn style_as_mut(&mut self) -> &mut CommandConsoleStyle {
+        &mut self.style
+    }
+
+    pub fn style(&self) -> &CommandConsoleStyle {
+        &self.style
     }
 }

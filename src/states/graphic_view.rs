@@ -1,15 +1,16 @@
-use crate::models::graphic_widget::point::Point;
+use crate::models::graphic_view::{canvas_style::GraphicViewStyle, point::Point};
 
-pub struct GraphicWidgetState {
+pub struct GraphicViewState {
     datasets: Vec<Vec<Point>>,
     current_dataset: Vec<Point>,
     x_min: f64,
     x_max: f64,
     y_min: f64,
     y_max: f64,
+    canvas_style: GraphicViewStyle,
 }
 
-impl GraphicWidgetState {
+impl GraphicViewState {
     pub fn new() -> Self {
         let data: Vec<Point> = (0..100)
             .map(|x| Point::new(x as f64, (x as f64 / 5.0).sin()))
@@ -21,6 +22,7 @@ impl GraphicWidgetState {
             x_max: 20.0,
             y_min: -1.2,
             y_max: 1.2,
+            canvas_style: GraphicViewStyle::new(),
         }
     }
 
@@ -29,6 +31,10 @@ impl GraphicWidgetState {
             .iter()
             .map(|point| (point.x(), point.y()))
             .collect()
+    }
+
+    pub fn canvas_style(&self) -> &GraphicViewStyle {
+        &self.canvas_style
     }
 
     pub fn x_min(&self) -> f64 {

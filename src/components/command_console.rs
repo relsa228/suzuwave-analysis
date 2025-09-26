@@ -1,12 +1,11 @@
-use std::{cell::RefCell, rc::Rc};
-
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     Frame,
     layout::Rect,
     style::{Color, Style},
-    widgets::{Block, Borders, Paragraph},
+    widgets::{Block, Paragraph},
 };
+use std::{cell::RefCell, rc::Rc};
 
 use crate::states::{app::ApplicationState, command_console::CommandConsoleState};
 
@@ -27,7 +26,6 @@ impl CommandConsoleComponent {
         match (key.modifiers, key.code) {
             (_, KeyCode::Char(':')) => {
                 self.state.flush_input();
-                self.state.push_char(':');
             }
             (_, KeyCode::Char(c)) => {
                 if self.application_state.borrow().input_mode() {
@@ -39,20 +37,38 @@ impl CommandConsoleComponent {
             }
             (_, KeyCode::Enter) => {
                 let _command = self.state.input_and_flush();
-                self.state.push_char(':');
                 // Send the command
             }
             (_, KeyCode::Esc) => {
                 self.application_state.borrow_mut().to_static_mode();
+                self.disable_input_mode();
             }
             _ => {}
         }
     }
 
+    pub fn to_input_mode(&mut self) {
+        self.state.style_as_mut().set_borders_color(Color::Green);
+        self.state.style_as_mut().set_input_color(Color::Green);
+    }
+
     pub fn render(&mut self, f: &mut Frame, rect: Rect) {
         let input_widget = Paragraph::new(self.state.input())
-            .style(Style::default().fg(Color::Yellow))
-            .block(Block::default().title("Input").borders(Borders::ALL));
+            .style(Style::default().fg(self.state.style().input_color()))
+            .block(
+                Block::default()
+                    .borders(self.state.style().borders())
+                    .border_type(self.state.style().borders_type())
+                    .border_style(Style::default().fg(self.state.style().border_color())),
+            );
         f.render_widget(input_widget, rect);
+    }
+
+    pub fn disable_input_mode(&mut self) {
+        self.state.flush_input();
+        self.state
+            .style_as_mut()
+            .set_borders_color(Color::LightGreen);
+        self.state.style_as_mut().set_input_color(Color::LightGreen);
     }
 }
