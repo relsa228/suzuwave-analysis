@@ -10,6 +10,7 @@ use ratatui::{
 
 use crate::{
     components::{command_console::CommandConsoleComponent, graphic_view::GraphicViewComponent},
+    models::graphic_view::point::Point,
     states::app::ApplicationState,
 };
 
@@ -21,12 +22,12 @@ pub struct App {
 }
 
 impl App {
-    pub fn new() -> Self {
+    pub fn new(data: Vec<Point>) -> Self {
         let application_state = Rc::new(RefCell::new(ApplicationState::new()));
         Self {
             application_state: application_state.clone(),
             command_console: CommandConsoleComponent::new(application_state),
-            graphic_widget: GraphicViewComponent::new(),
+            graphic_widget: GraphicViewComponent::new(data),
         }
     }
 

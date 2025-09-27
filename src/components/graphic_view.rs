@@ -10,53 +10,45 @@ use ratatui::{
     },
 };
 
-use crate::states::graphic_view::GraphicViewState;
+use crate::{models::graphic_view::point::Point, states::graphic_view::GraphicViewState};
 
 pub struct GraphicViewComponent {
     state: GraphicViewState,
 }
 
 impl GraphicViewComponent {
-    pub fn new() -> Self {
+    pub fn new(plot: Vec<Point>) -> Self {
         Self {
-            state: GraphicViewState::new(),
+            state: GraphicViewState::new(plot),
         }
     }
 
     pub fn handle_key_events(&mut self, key: KeyEvent) {
         match key.code {
             KeyCode::Left => {
-                self.state.x_min_add(-1.0);
-                self.state.x_max_add(-1.0);
+                self.state.plot_move(true);
             }
             KeyCode::Right => {
-                self.state.x_min_add(1.0);
-                self.state.x_max_add(1.0);
+                self.state.plot_move(false);
             }
             KeyCode::Up => {
-                let center = (self.state.x_min() + self.state.x_max()) / 2.0;
-                let half = (self.state.x_max() - self.state.x_min()) / 2.0 * 0.8;
-                self.state.set_x_min(center - half);
-                self.state.set_x_max(center + half);
+                self.state.plot_scale(true);
             }
             KeyCode::Down => {
-                let center = (self.state.x_min() + self.state.x_max()) / 2.0;
-                let half = (self.state.x_max() - self.state.x_min()) / 2.0 * 1.2;
-                self.state.set_x_min(center - half);
-                self.state.set_x_max(center + half);
+                self.state.plot_scale(false);
             }
             _ => {}
         }
     }
 
     pub fn render(&mut self, f: &mut Frame, rect: Rect) {
-        let current_dataset = &self.state.current_dataset();
+        let current_dataset = &self.state.current_dataset().data_to_pure_coordinates();
         let datasets = vec![
             Dataset::default()
                 .marker(symbols::Marker::HalfBlock)
                 .style(Style::default().fg(Color::Cyan))
                 .graph_type(GraphType::Line)
-                .data(current_dataset),
+                .data(&current_dataset),
         ];
 
         let chart = Chart::new(datasets)
