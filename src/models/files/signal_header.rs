@@ -1,0 +1,15 @@
+pub struct SignalHeader {
+    pub signature: [u8; 4],
+    pub channels: u32,
+    pub sample_size: u32,
+    pub spectral_lines: u32,
+    pub cutoff_freq: u32,
+    pub freq_resolution: f32,
+    pub block_time: f32,
+    pub total_time: u32,
+    pub blocks_set: u32,
+    pub data_size: u32,
+    pub blocks_received: u32,
+    pub max_value: f32,
+    pub min_value: f32,
+}

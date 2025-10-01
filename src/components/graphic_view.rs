@@ -1,3 +1,4 @@
+use anyhow::{Result, anyhow};
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     Frame,
@@ -9,18 +10,33 @@ use ratatui::{
         canvas::{self, Canvas, Context},
     },
 };
+use std::{collections::HashMap, path::Path, str::FromStr};
 
-use crate::{models::graphic_view::point::Point, states::graphic_view::GraphicViewState};
+use crate::{
+    clients::{files::vibric::VibricReadingClient, traits::file_read_only::FileReadOnly},
+    models::files::file_types::FileType,
+    states::graphic_view::GraphicViewState,
+    utils::files::errors::FileError,
+};
 
 pub struct GraphicViewComponent {
     state: GraphicViewState,
+    file_parsers: HashMap<FileType, Box<dyn FileReadOnly>>,
 }
 
 impl GraphicViewComponent {
-    pub fn new(plot: Vec<Point>) -> Self {
-        Self {
-            state: GraphicViewState::new(plot),
-        }
+    pub fn new() -> Self {
+        let mut file_parsers: HashMap<FileType, Box<dyn FileReadOnly>> = HashMap::new();
+        file_parsers.insert(FileType::Vibric, Box::new(VibricReadingClient::new()));
+
+        // Testing
+        let mut instant = Self {
+            file_parsers: file_parsers,
+            state: GraphicViewState::new(),
+        };
+        let _ =instant.add_plot_from_file(Path::new("/Users/relsa/Downloads/XZ/ОЭД_в_СС/Данные/OBRAZCY_SIGNALOV/01_04_2009_12_07_01_ch1_datafile.bin"));
+
+        instant
     }
 
     pub fn handle_key_events(&mut self, key: KeyEvent) {
@@ -68,6 +84,23 @@ impl GraphicViewComponent {
             });
         f.render_widget(canvas, rect);
         f.render_widget(chart, rect);
+    }
+
+    fn add_plot_from_file(&mut self, path: &Path) -> Result<()> {
+        if let Some(extension) = path.extension() {
+            let parser = self
+                .file_parsers
+                .get(&FileType::from_str(
+                    &extension
+                        .to_str()
+                        .ok_or(anyhow!(FileError::ExtensionParseError))?,
+                )?)
+                .ok_or(anyhow!(FileError::UnsupportedType))?;
+            let data = parser
+                .parse_signal_file(path.to_str().ok_or(anyhow!(FileError::PathParseError))?, 0)?;
+            self.state.add_plot(data);
+        }
+        Ok(())
     }
 
     fn canvas_generate_labels(&self, context: &mut Context<'_>, steps: u32) {

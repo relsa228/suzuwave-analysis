@@ -14,10 +14,9 @@ pub struct GraphicViewState {
 }
 
 impl GraphicViewState {
-    pub fn new(data: Vec<Point>) -> Self {
-        let current_plot = GraphicViewPlot::new(data);
+    pub fn new() -> Self {
         Self {
-            plots: vec![current_plot],
+            plots: vec![],
             current_plot_id: 0,
             canvas_style: GraphicViewStyle::new(),
         }
@@ -67,5 +66,11 @@ impl GraphicViewState {
             self.plots[self.current_plot_id].x_min += 1.0;
             self.plots[self.current_plot_id].x_max += 1.0;
         }
+    }
+
+    pub fn add_plot(&mut self, data: Vec<Point>) {
+        let current_plot = GraphicViewPlot::new(data);
+        self.plots.push(current_plot);
+        self.current_plot_id = self.plots.len() - 1;
     }
 }
