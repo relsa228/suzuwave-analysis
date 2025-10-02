@@ -10,7 +10,7 @@ use crate::{
         files::{signal_file::SignalFile, signal_header::SignalHeader},
         graphic_view::point::Point,
     },
-    utils::files::errors::FileError,
+    shared::errors::files::FileError,
 };
 
 const VIBRIC_SIGNATURE: &[u8] = b"TMB1";

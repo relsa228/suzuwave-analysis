@@ -11,24 +11,26 @@ use crate::states::{app::ApplicationState, command_console::CommandConsoleState}
 
 pub struct CommandConsoleComponent {
     state: CommandConsoleState,
-    application_state: Rc<RefCell<ApplicationState>>,
 }
 
 impl CommandConsoleComponent {
-    pub fn new(application_state: Rc<RefCell<ApplicationState>>) -> Self {
+    pub fn new() -> Self {
         Self {
             state: CommandConsoleState::new(),
-            application_state,
         }
     }
 
-    pub fn handle_key_events(&mut self, key: KeyEvent) {
+    pub fn handle_key_events(
+        &mut self,
+        key: KeyEvent,
+        application_state: Rc<RefCell<ApplicationState>>,
+    ) {
         match (key.modifiers, key.code) {
             (_, KeyCode::Char(':')) => {
                 self.state.flush_input();
             }
             (_, KeyCode::Char(c)) => {
-                if self.application_state.borrow().input_mode() {
+                if application_state.borrow().is_input_mode {
                     self.state.push_char(c);
                 }
             }
@@ -36,11 +38,10 @@ impl CommandConsoleComponent {
                 self.state.pop_char();
             }
             (_, KeyCode::Enter) => {
-                let _command = self.state.input_and_flush();
-                // Send the command
+                application_state.borrow_mut().command = Some(self.state.input_and_flush());
             }
             (_, KeyCode::Esc) => {
-                self.application_state.borrow_mut().to_static_mode();
+                application_state.borrow_mut().to_static_mode();
                 self.disable_input_mode();
             }
             _ => {}

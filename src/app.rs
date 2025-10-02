@@ -15,7 +15,6 @@ use crate::{
 
 pub struct App {
     application_state: Rc<RefCell<ApplicationState>>,
-
     command_console: CommandConsoleComponent,
     graphic_widget: GraphicViewComponent,
 }
@@ -25,23 +24,21 @@ impl App {
         let application_state = Rc::new(RefCell::new(ApplicationState::new()));
         Self {
             application_state: application_state.clone(),
-            command_console: CommandConsoleComponent::new(application_state),
+            command_console: CommandConsoleComponent::new(),
             graphic_widget: GraphicViewComponent::new(),
         }
     }
 
     pub fn run(mut self, mut terminal: DefaultTerminal) -> Result<()> {
-        while self.application_state.borrow().running() {
+        while self.application_state.borrow().is_running {
             terminal.draw(|f| {
                 let size = f.area();
                 let main_chunks = Layout::default()
                     .direction(Direction::Horizontal)
                     .margin(1)
                     .constraints([
-                        Constraint::Percentage(
-                            self.application_state.borrow().file_explorer_size(),
-                        ),
-                        Constraint::Percentage(self.application_state.borrow().workspace_size()),
+                        Constraint::Percentage(self.application_state.borrow().file_explorer_size),
+                        Constraint::Percentage(self.application_state.borrow().workspace_size),
                     ])
                     .split(size);
 
@@ -68,10 +65,13 @@ impl App {
     fn handle_crossterm_events(&mut self) -> Result<()> {
         match event::read()? {
             Event::Key(key) if key.kind == KeyEventKind::Press => {
-                self.graphic_widget.handle_key_events(key);
-                if self.application_state.borrow().input_mode() {
-                    self.command_console.handle_key_events(key);
+                if self.application_state.borrow().is_input_mode {
+                    self.command_console
+                        .handle_key_events(key, self.application_state.clone());
+                    self.graphic_widget
+                        .update_from_state(self.application_state.clone());
                 } else {
+                    self.graphic_widget.handle_key_events(key);
                     self.handle_key_events(key);
                 }
             }

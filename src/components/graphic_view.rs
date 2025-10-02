@@ -10,13 +10,13 @@ use ratatui::{
         canvas::{self, Canvas, Context},
     },
 };
-use std::{collections::HashMap, path::Path, str::FromStr};
+use std::{cell::RefCell, collections::HashMap, path::Path, rc::Rc, str::FromStr};
 
 use crate::{
     clients::{files::vibric::VibricReadingClient, traits::file_read_only::FileReadOnly},
     models::files::file_types::FileType,
-    states::graphic_view::GraphicViewState,
-    utils::files::errors::FileError,
+    shared::errors::files::FileError,
+    states::{app::ApplicationState, graphic_view::GraphicViewState},
 };
 
 pub struct GraphicViewComponent {
@@ -54,6 +54,14 @@ impl GraphicViewComponent {
                 self.state.plot_scale(false);
             }
             _ => {}
+        }
+    }
+
+    pub fn update_from_state(&mut self, state: Rc<RefCell<ApplicationState>>) {
+        let command = state.borrow().command.clone();
+        if let Some(cmd) = command {
+            if cmd == "<...>" {}
+            state.borrow_mut().command = None;
         }
     }
 

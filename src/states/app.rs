@@ -1,10 +1,12 @@
 pub struct ApplicationState {
-    is_running: bool,
-    is_input_mode: bool,
-    is_static_mode: bool,
+    pub is_running: bool,
+    pub is_input_mode: bool,
+    pub is_static_mode: bool,
 
-    file_explorer_size: u16,
-    workspace_size: u16,
+    pub file_explorer_size: u16,
+    pub workspace_size: u16,
+
+    pub command: Option<String>,
 }
 
 impl ApplicationState {
@@ -15,6 +17,7 @@ impl ApplicationState {
             is_static_mode: false,
             file_explorer_size: 15,
             workspace_size: 85,
+            command: None,
         }
     }
 
@@ -34,25 +37,5 @@ impl ApplicationState {
 
     pub fn quit(&mut self) {
         self.is_running = false;
-    }
-
-    pub fn running(&self) -> bool {
-        self.is_running
-    }
-
-    pub fn input_mode(&self) -> bool {
-        self.is_input_mode
-    }
-
-    pub fn static_mode(&self) -> bool {
-        self.is_static_mode
-    }
-
-    pub fn file_explorer_size(&self) -> u16 {
-        self.file_explorer_size
-    }
-
-    pub fn workspace_size(&self) -> u16 {
-        self.workspace_size
     }
 }
