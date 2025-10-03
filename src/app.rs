@@ -9,7 +9,10 @@ use std::{cell::RefCell, path::Path, rc::Rc, str::FromStr};
 
 use crate::{
     components::{command_console::CommandConsoleComponent, graphic_view::GraphicViewComponent},
-    shared::{commands::general::GeneralCommands, errors::commands::CommandError},
+    shared::{
+        commands::general::GeneralCommands, constants::command::DEFAULT_COMMAND,
+        errors::commands::CommandError,
+    },
     states::app::ApplicationState,
 };
 
@@ -81,10 +84,14 @@ impl App {
                     if let Err(err) = self.update_from_state() {
                         error = Some(err);
                     };
-                    if self.application_state.borrow().command().is_some() {
-                        self.command_console.clean_command_input(error);
-                        self.application_state.borrow_mut().set_command(None);
+
+                    if let Some(error) = error {
+                        self.command_console.set_error(error);
+                    } else if let Some(command) = self.application_state.borrow().command() {
+                        self.command_console
+                            .set_error(CommandError::CommandSyntax(command).into());
                     }
+                    self.application_state.borrow_mut().set_command(None);
                 } else {
                     self.graphic_widget.handle_key_events(key);
                     self.handle_key_events(key);
@@ -103,7 +110,7 @@ impl App {
         let cmd = app_state.command().clone();
         if let Some(cmd) = cmd {
             let args = cmd.split_whitespace().collect::<Vec<&str>>();
-            if args.is_empty() {
+            if args.is_empty() || args[0] == DEFAULT_COMMAND {
                 return Err(CommandError::EmptyCommand.into());
             }
             if let Ok(command) = GeneralCommands::from_str(args[0]) {
@@ -116,6 +123,7 @@ impl App {
                     GeneralCommands::OpenSettings => unimplemented!(),
                     GeneralCommands::Quit => app_state.quit(),
                 }
+                app_state.set_command(None);
             }
         }
         Ok(())

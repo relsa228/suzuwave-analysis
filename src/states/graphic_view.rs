@@ -1,11 +1,9 @@
 use std::ops::Mul;
 
-use crate::models::graphic_view::{
-    canvas_style::GraphicViewStyle, plot::GraphicViewPlot, point::Point,
+use crate::{
+    models::graphic_view::{canvas_style::GraphicViewStyle, plot::GraphicViewPlot, point::Point},
+    shared::constants::graphic_view::{ZOOM_IN_COEFFICIENT, ZOOM_OUT_COEFFICIENT},
 };
-
-const ZOOM_IN_COEFFICIENT: f64 = 1.2;
-const ZOOM_OUT_COEFFICIENT: f64 = 0.8;
 
 pub struct GraphicViewState {
     plots: Vec<GraphicViewPlot>,

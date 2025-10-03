@@ -39,9 +39,14 @@ impl CommandConsoleComponent {
                 self.state.pop_char();
             }
             (_, KeyCode::Enter) => {
-                application_state
-                    .borrow_mut()
-                    .set_command(Some(self.state.input_and_flush()));
+                if !self.state.is_input_error() {
+                    application_state
+                        .borrow_mut()
+                        .set_command(Some(self.state.input_and_flush()));
+                } else {
+                    self.state.clear_error();
+                    self.state.flush_input();
+                }
             }
             (_, KeyCode::Esc) => {
                 application_state.borrow_mut().to_static_mode();
@@ -76,15 +81,7 @@ impl CommandConsoleComponent {
         self.state.style_as_mut().set_input_color(Color::LightGreen);
     }
 
-    pub fn clean_command_input(&mut self, error: Option<Error>) {
-        if let Some(error) = error {
-            self.state.style_as_mut().set_input_color(Color::Red);
-            self.state.style_as_mut().set_borders_color(Color::Red);
-            self.state.set_input(error.to_string());
-        } else {
-            self.state.style_as_mut().set_input_color(Color::Green);
-            self.state.style_as_mut().set_borders_color(Color::Green);
-            self.state.flush_input();
-        }
+    pub fn set_error(&mut self, error: Error) {
+        self.state.set_error(error);
     }
 }

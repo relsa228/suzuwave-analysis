@@ -17,7 +17,10 @@ use crate::{
     models::files::file_types::FileType,
     shared::{
         commands::graphic_view::GraphicViewCommands,
-        constants::graphic_view::{DEFAULT_PLOT_X_MOVE, DEFAULT_PLOT_ZOOM_MULTIPLIER},
+        constants::{
+            command::DEFAULT_COMMAND,
+            graphic_view::{DEFAULT_PLOT_X_MOVE, DEFAULT_PLOT_ZOOM_MULTIPLIER},
+        },
         errors::{commands::CommandError, files::FileError},
     },
     states::{app::ApplicationState, graphic_view::GraphicViewState},
@@ -61,10 +64,10 @@ impl GraphicViewComponent {
     }
 
     pub fn update_from_state(&mut self, state: Rc<RefCell<ApplicationState>>) -> Result<()> {
-        let cmd = state.borrow().command();
-        if let Some(cmd) = cmd {
+        let mut state_borrow = state.borrow_mut();
+        if let Some(cmd) = state_borrow.command() {
             let args = cmd.split_whitespace().collect::<Vec<&str>>();
-            if args.is_empty() {
+            if args.is_empty() || args[0] == DEFAULT_COMMAND {
                 return Err(CommandError::EmptyCommand.into());
             }
             if let Ok(command) = GraphicViewCommands::from_str(args[0]) {
@@ -145,6 +148,7 @@ impl GraphicViewComponent {
                         }
                     }
                 };
+                state_borrow.set_command(None);
             }
         }
         Ok(())
