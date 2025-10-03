@@ -1,4 +1,4 @@
-use anyhow::{Result, anyhow};
+use anyhow::Result;
 use std::{
     fs::File,
     io::{BufReader, Read},
@@ -41,7 +41,7 @@ impl FileReadOnly for VibricReadingClient {
         let mut signature = [0u8; 4];
         reader.read_exact(&mut signature)?;
         if &signature != VIBRIC_SIGNATURE {
-            return Err(anyhow!(FileError::VibricSignature));
+            return Err(FileError::VibricSignature.into());
         }
 
         let header = SignalHeader {

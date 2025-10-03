@@ -1,0 +1,2 @@
+pub const DEFAULT_PLOT_X_MOVE: f64 = 1.0;
+pub const DEFAULT_PLOT_ZOOM_MULTIPLIER: f64 = 1.0;

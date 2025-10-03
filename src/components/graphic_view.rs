@@ -1,4 +1,4 @@
-use anyhow::{Result, anyhow};
+use anyhow::Result;
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     Frame,
@@ -15,7 +15,11 @@ use std::{cell::RefCell, collections::HashMap, path::Path, rc::Rc, str::FromStr}
 use crate::{
     clients::{files::vibric::VibricReadingClient, traits::file_read_only::FileReadOnly},
     models::files::file_types::FileType,
-    shared::errors::files::FileError,
+    shared::{
+        commands::graphic_view::GraphicViewCommands,
+        constants::graphic_view::{DEFAULT_PLOT_X_MOVE, DEFAULT_PLOT_ZOOM_MULTIPLIER},
+        errors::{commands::CommandError, files::FileError},
+    },
     states::{app::ApplicationState, graphic_view::GraphicViewState},
 };
 
@@ -42,27 +46,111 @@ impl GraphicViewComponent {
     pub fn handle_key_events(&mut self, key: KeyEvent) {
         match key.code {
             KeyCode::Left => {
-                self.state.plot_move(true);
+                self.state.plot_move(true, DEFAULT_PLOT_X_MOVE);
             }
             KeyCode::Right => {
-                self.state.plot_move(false);
+                self.state.plot_move(false, DEFAULT_PLOT_X_MOVE);
             }
             KeyCode::Up => {
-                self.state.plot_scale(true);
+                self.state.plot_scale(true, DEFAULT_PLOT_ZOOM_MULTIPLIER);
             }
             KeyCode::Down => {
-                self.state.plot_scale(false);
+                self.state.plot_scale(false, DEFAULT_PLOT_ZOOM_MULTIPLIER);
             }
             _ => {}
         }
     }
 
-    pub fn update_from_state(&mut self, state: Rc<RefCell<ApplicationState>>) {
-        let command = state.borrow().command.clone();
-        if let Some(cmd) = command {
-            if cmd == "<...>" {}
+    pub fn update_from_state(&mut self, state: Rc<RefCell<ApplicationState>>) -> Result<()> {
+        let cmd = state.borrow().command.clone();
+        if let Some(cmd) = cmd {
+            let args = cmd.split_whitespace().collect::<Vec<&str>>();
+            if args.is_empty() {
+                return Err(CommandError::EmptyCommand.into());
+            }
+            match GraphicViewCommands::from_str(args[0])
+                .map_err(|_| CommandError::CommandSyntax(String::from(args[0])))?
+            {
+                GraphicViewCommands::OpenFile => {
+                    if let Some(path_arg) = args.get(1) {
+                        let file_path = Path::new(path_arg);
+                        if !file_path.exists() {
+                            return Err(
+                                CommandError::InvalidArguments(String::from(*path_arg)).into()
+                            );
+                        }
+                        self.add_plot_from_file(&file_path)?;
+                    } else {
+                        return Err(CommandError::NotEnoughArguments.into());
+                    }
+                }
+
+                GraphicViewCommands::ZoomIn => {
+                    if let Some(multiplier_arg) = args.get(1) {
+                        self.state.plot_scale(
+                            true,
+                            multiplier_arg.parse::<f64>().map_err(|_| {
+                                CommandError::InvalidArguments(String::from(*multiplier_arg))
+                            })?,
+                        );
+                    } else {
+                        return Err(CommandError::NotEnoughArguments.into());
+                    }
+                }
+                GraphicViewCommands::ZoomOut => {
+                    if let Some(multiplier_arg) = args.get(1) {
+                        self.state.plot_scale(
+                            false,
+                            multiplier_arg.parse::<f64>().map_err(|_| {
+                                CommandError::InvalidArguments(String::from(*multiplier_arg))
+                            })?,
+                        );
+                    } else {
+                        return Err(CommandError::NotEnoughArguments.into());
+                    }
+                }
+                GraphicViewCommands::MoveLeft => {
+                    if let Some(points_arg) = args.get(1) {
+                        self.state.plot_move(
+                            true,
+                            points_arg.parse::<f64>().map_err(|_| {
+                                CommandError::InvalidArguments(String::from(*points_arg))
+                            })?,
+                        );
+                    } else {
+                        return Err(CommandError::NotEnoughArguments.into());
+                    }
+                }
+                GraphicViewCommands::MoveRight => {
+                    if let Some(points_arg) = args.get(1) {
+                        self.state.plot_move(
+                            false,
+                            points_arg.parse::<f64>().map_err(|_| {
+                                CommandError::InvalidArguments(String::from(*points_arg))
+                            })?,
+                        );
+                    } else {
+                        return Err(CommandError::NotEnoughArguments.into());
+                    }
+                }
+
+                GraphicViewCommands::CloseWorkingView => {
+                    self.state.delete_current_plot();
+                }
+                GraphicViewCommands::SwitchWorkingView => {
+                    if let Some(points_arg) = args.get(1) {
+                        self.state
+                            .change_current_plot(points_arg.parse::<u32>().map_err(|_| {
+                                CommandError::InvalidArguments(String::from(*points_arg))
+                            })?);
+                    } else {
+                        return Err(CommandError::NotEnoughArguments.into());
+                    }
+                }
+            }
             state.borrow_mut().command = None;
         }
+        Ok(())
     }
 
     pub fn render(&mut self, f: &mut Frame, rect: Rect) {
@@ -99,13 +187,11 @@ impl GraphicViewComponent {
             let parser = self
                 .file_parsers
                 .get(&FileType::from_str(
-                    &extension
-                        .to_str()
-                        .ok_or(anyhow!(FileError::ExtensionParseError))?,
+                    &extension.to_str().ok_or(FileError::ExtensionParseError)?,
                 )?)
-                .ok_or(anyhow!(FileError::UnsupportedType))?;
-            let data = parser
-                .parse_signal_file(path.to_str().ok_or(anyhow!(FileError::PathParseError))?, 0)?;
+                .ok_or(FileError::UnsupportedType)?;
+            let data =
+                parser.parse_signal_file(path.to_str().ok_or(FileError::PathParseError)?, 0)?;
             self.state.add_plot(data);
         }
         Ok(())
