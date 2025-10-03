@@ -16,14 +16,17 @@ pub struct GraphicViewState {
 impl GraphicViewState {
     pub fn new() -> Self {
         Self {
-            plots: vec![],
+            plots: Vec::new(),
             current_plot_id: 0,
             canvas_style: GraphicViewStyle::new(),
         }
     }
 
     pub fn current_dataset(&self) -> GraphicViewPlot {
-        self.plots[self.current_plot_id].clone()
+        self.plots
+            .get(self.current_plot_id)
+            .cloned()
+            .unwrap_or_default()
     }
 
     pub fn canvas_style(&self) -> &GraphicViewStyle {
@@ -31,40 +34,60 @@ impl GraphicViewState {
     }
 
     pub fn x_min(&self) -> f64 {
-        self.plots[self.current_plot_id].x_min
+        self.plots
+            .get(self.current_plot_id)
+            .cloned()
+            .unwrap_or_default()
+            .x_min
     }
 
     pub fn x_max(&self) -> f64 {
-        self.plots[self.current_plot_id].x_max
+        self.plots
+            .get(self.current_plot_id)
+            .cloned()
+            .unwrap_or_default()
+            .x_max
     }
 
     pub fn y_min(&self) -> f64 {
-        self.plots[self.current_plot_id].y_min
+        self.plots
+            .get(self.current_plot_id)
+            .cloned()
+            .unwrap_or_default()
+            .y_min
     }
 
     pub fn y_max(&self) -> f64 {
-        self.plots[self.current_plot_id].y_max
+        self.plots
+            .get(self.current_plot_id)
+            .cloned()
+            .unwrap_or_default()
+            .y_max
     }
 
     pub fn plot_scale(&mut self, zoom_in: bool, zoom_multiplier: f64) {
-        let center = (self.x_min() + self.x_max()) / 2.0;
-        let half = (self.x_max() - self.x_min()) / 2.0;
-        let half = if zoom_in {
-            half.mul(ZOOM_IN_COEFFICIENT * zoom_multiplier)
-        } else {
-            half.mul(ZOOM_OUT_COEFFICIENT * zoom_multiplier)
-        };
-        self.plots[self.current_plot_id].x_min = center - half;
-        self.plots[self.current_plot_id].x_max = center + half;
+        if let Some(plot) = self.plots.get_mut(self.current_plot_id) {
+            let center = (plot.x_min + plot.x_max) / 2.0;
+            let half = (plot.x_max - plot.x_min) / 2.0;
+            let half = if zoom_in {
+                half.mul(ZOOM_IN_COEFFICIENT * zoom_multiplier)
+            } else {
+                half.mul(ZOOM_OUT_COEFFICIENT / zoom_multiplier)
+            };
+            plot.x_min = center - half;
+            plot.x_max = center + half;
+        }
     }
 
     pub fn plot_move(&mut self, left: bool, points: f64) {
-        if left {
-            self.plots[self.current_plot_id].x_min -= points;
-            self.plots[self.current_plot_id].x_max -= points;
-        } else {
-            self.plots[self.current_plot_id].x_min += points;
-            self.plots[self.current_plot_id].x_max += points;
+        if let Some(plot) = self.plots.get_mut(self.current_plot_id) {
+            if left {
+                plot.x_min -= points;
+                plot.x_max -= points;
+            } else {
+                plot.x_min += points;
+                plot.x_max += points;
+            }
         }
     }
 

@@ -6,8 +6,8 @@ pub enum GeneralCommands {
     About,
     #[strum(serialize = ":h")]
     Help,
-    #[strum(serialize = ":fb")]
-    OpenCloseFileBar,
+    #[strum(serialize = ":fe")]
+    OpenCloseFileExplorer,
 
     #[strum(serialize = ":sf")]
     OpenSettings,

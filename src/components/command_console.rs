@@ -1,3 +1,4 @@
+use anyhow::Error;
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     Frame,
@@ -30,7 +31,7 @@ impl CommandConsoleComponent {
                 self.state.flush_input();
             }
             (_, KeyCode::Char(c)) => {
-                if application_state.borrow().is_input_mode {
+                if application_state.borrow().is_input_mode() {
                     self.state.push_char(c);
                 }
             }
@@ -38,7 +39,9 @@ impl CommandConsoleComponent {
                 self.state.pop_char();
             }
             (_, KeyCode::Enter) => {
-                application_state.borrow_mut().command = Some(self.state.input_and_flush());
+                application_state
+                    .borrow_mut()
+                    .set_command(Some(self.state.input_and_flush()));
             }
             (_, KeyCode::Esc) => {
                 application_state.borrow_mut().to_static_mode();
@@ -71,5 +74,17 @@ impl CommandConsoleComponent {
             .style_as_mut()
             .set_borders_color(Color::LightGreen);
         self.state.style_as_mut().set_input_color(Color::LightGreen);
+    }
+
+    pub fn clean_command_input(&mut self, error: Option<Error>) {
+        if let Some(error) = error {
+            self.state.style_as_mut().set_input_color(Color::Red);
+            self.state.style_as_mut().set_borders_color(Color::Red);
+            self.state.set_input(error.to_string());
+        } else {
+            self.state.style_as_mut().set_input_color(Color::Green);
+            self.state.style_as_mut().set_borders_color(Color::Green);
+            self.state.flush_input();
+        }
     }
 }

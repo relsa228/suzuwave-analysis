@@ -1,15 +1,15 @@
-use std::{cell::RefCell, rc::Rc};
-
-use color_eyre::Result;
+use anyhow::Error;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use ratatui::{
     DefaultTerminal,
     layout::{Constraint, Direction, Layout},
     widgets::{Block, Borders},
 };
+use std::{cell::RefCell, path::Path, rc::Rc, str::FromStr};
 
 use crate::{
     components::{command_console::CommandConsoleComponent, graphic_view::GraphicViewComponent},
+    shared::{commands::general::GeneralCommands, errors::commands::CommandError},
     states::app::ApplicationState,
 };
 
@@ -20,25 +20,27 @@ pub struct App {
 }
 
 impl App {
-    pub fn new() -> Self {
+    pub fn new(initial_signal_file_path: Option<&Path>) -> Self {
         let application_state = Rc::new(RefCell::new(ApplicationState::new()));
         Self {
             application_state: application_state.clone(),
             command_console: CommandConsoleComponent::new(),
-            graphic_widget: GraphicViewComponent::new(),
+            graphic_widget: GraphicViewComponent::new(initial_signal_file_path),
         }
     }
 
-    pub fn run(mut self, mut terminal: DefaultTerminal) -> Result<()> {
-        while self.application_state.borrow().is_running {
+    pub fn run(mut self, mut terminal: DefaultTerminal) -> color_eyre::Result<()> {
+        while self.application_state.borrow().is_running() {
             terminal.draw(|f| {
                 let size = f.area();
                 let main_chunks = Layout::default()
                     .direction(Direction::Horizontal)
                     .margin(1)
                     .constraints([
-                        Constraint::Percentage(self.application_state.borrow().file_explorer_size),
-                        Constraint::Percentage(self.application_state.borrow().workspace_size),
+                        Constraint::Percentage(
+                            self.application_state.borrow().file_explorer_size(),
+                        ),
+                        Constraint::Percentage(self.application_state.borrow().workspace_size()),
                     ])
                     .split(size);
 
@@ -62,14 +64,27 @@ impl App {
         Ok(())
     }
 
-    fn handle_crossterm_events(&mut self) -> Result<()> {
+    fn handle_crossterm_events(&mut self) -> color_eyre::Result<()> {
         match event::read()? {
             Event::Key(key) if key.kind == KeyEventKind::Press => {
-                if self.application_state.borrow().is_input_mode {
+                if self.application_state.borrow().is_input_mode() {
                     self.command_console
                         .handle_key_events(key, self.application_state.clone());
-                    self.graphic_widget
-                        .update_from_state(self.application_state.clone());
+
+                    let mut error: Option<Error> = None;
+                    if let Err(err) = self
+                        .graphic_widget
+                        .update_from_state(self.application_state.clone())
+                    {
+                        error = Some(err);
+                    };
+                    if let Err(err) = self.update_from_state() {
+                        error = Some(err);
+                    };
+                    if self.application_state.borrow().command().is_some() {
+                        self.command_console.clean_command_input(error);
+                        self.application_state.borrow_mut().set_command(None);
+                    }
                 } else {
                     self.graphic_widget.handle_key_events(key);
                     self.handle_key_events(key);
@@ -78,6 +93,30 @@ impl App {
             Event::Mouse(_) => {}
             Event::Resize(_, _) => {}
             _ => {}
+        }
+        Ok(())
+    }
+
+    fn update_from_state(&mut self) -> anyhow::Result<()> {
+        let mut app_state = self.application_state.borrow_mut();
+        let is_file_explorer_visible = app_state.is_file_explorer_visible();
+        let cmd = app_state.command().clone();
+        if let Some(cmd) = cmd {
+            let args = cmd.split_whitespace().collect::<Vec<&str>>();
+            if args.is_empty() {
+                return Err(CommandError::EmptyCommand.into());
+            }
+            if let Ok(command) = GeneralCommands::from_str(args[0]) {
+                match command {
+                    GeneralCommands::About => todo!(),
+                    GeneralCommands::Help => todo!(),
+                    GeneralCommands::OpenCloseFileExplorer => {
+                        app_state.change_file_explorer_visibility(!is_file_explorer_visible)
+                    }
+                    GeneralCommands::OpenSettings => unimplemented!(),
+                    GeneralCommands::Quit => app_state.quit(),
+                }
+            }
         }
         Ok(())
     }
@@ -91,7 +130,6 @@ impl App {
                 self.command_console.to_input_mode();
                 self.application_state.borrow_mut().to_input_mode()
             }
-            // Add other key handlers here.
             _ => {}
         }
     }

@@ -21,6 +21,10 @@ impl CommandConsoleState {
         self.input.pop()
     }
 
+    pub fn set_input(&mut self, input: String) {
+        self.input = input;
+    }
+
     pub fn flush_input(&mut self) {
         self.input.clear();
         self.input.push(':');

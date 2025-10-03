@@ -2,7 +2,7 @@ use crate::models::graphic_view::point::Point;
 
 const MARGIN: f64 = 0.07;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct GraphicViewPlot {
     pub x_min: f64,
     pub x_max: f64,

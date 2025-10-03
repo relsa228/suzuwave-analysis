@@ -29,18 +29,17 @@ pub struct GraphicViewComponent {
 }
 
 impl GraphicViewComponent {
-    pub fn new() -> Self {
+    pub fn new(initial_signal_file: Option<&Path>) -> Self {
         let mut file_parsers: HashMap<FileType, Box<dyn FileReadOnly>> = HashMap::new();
         file_parsers.insert(FileType::Vibric, Box::new(VibricReadingClient::new()));
-
-        // Testing
-        let mut instant = Self {
+        let mut instance = Self {
             file_parsers: file_parsers,
             state: GraphicViewState::new(),
         };
-        let _ =instant.add_plot_from_file(Path::new("/Users/relsa/Downloads/XZ/ОЭД_в_СС/Данные/OBRAZCY_SIGNALOV/01_04_2009_12_07_01_ch1_datafile.bin"));
-
-        instant
+        if let Some(file) = initial_signal_file {
+            let _ = instance.add_plot_from_file(file);
+        }
+        instance
     }
 
     pub fn handle_key_events(&mut self, key: KeyEvent) {
@@ -62,93 +61,91 @@ impl GraphicViewComponent {
     }
 
     pub fn update_from_state(&mut self, state: Rc<RefCell<ApplicationState>>) -> Result<()> {
-        let cmd = state.borrow().command.clone();
+        let cmd = state.borrow().command();
         if let Some(cmd) = cmd {
             let args = cmd.split_whitespace().collect::<Vec<&str>>();
             if args.is_empty() {
                 return Err(CommandError::EmptyCommand.into());
             }
-            match GraphicViewCommands::from_str(args[0])
-                .map_err(|_| CommandError::CommandSyntax(String::from(args[0])))?
-            {
-                GraphicViewCommands::OpenFile => {
-                    if let Some(path_arg) = args.get(1) {
-                        let file_path = Path::new(path_arg);
-                        if !file_path.exists() {
-                            return Err(
-                                CommandError::InvalidArguments(String::from(*path_arg)).into()
-                            );
+            if let Ok(command) = GraphicViewCommands::from_str(args[0]) {
+                match command {
+                    GraphicViewCommands::OpenFile => {
+                        if let Some(path_arg) = args.get(1) {
+                            let file_path = Path::new(path_arg);
+                            if !file_path.exists() {
+                                return Err(CommandError::InvalidArguments(String::from(
+                                    *path_arg,
+                                ))
+                                .into());
+                            }
+                            self.add_plot_from_file(&file_path)?;
+                        } else {
+                            return Err(CommandError::NotEnoughArguments.into());
                         }
-                        self.add_plot_from_file(&file_path)?;
-                    } else {
-                        return Err(CommandError::NotEnoughArguments.into());
                     }
-                }
-
-                GraphicViewCommands::ZoomIn => {
-                    if let Some(multiplier_arg) = args.get(1) {
-                        self.state.plot_scale(
-                            true,
-                            multiplier_arg.parse::<f64>().map_err(|_| {
-                                CommandError::InvalidArguments(String::from(*multiplier_arg))
-                            })?,
-                        );
-                    } else {
-                        return Err(CommandError::NotEnoughArguments.into());
+                    GraphicViewCommands::ZoomIn => {
+                        if let Some(multiplier_arg) = args.get(1) {
+                            self.state.plot_scale(
+                                false,
+                                multiplier_arg.parse::<f64>().map_err(|_| {
+                                    CommandError::InvalidArguments(String::from(*multiplier_arg))
+                                })?,
+                            );
+                        } else {
+                            return Err(CommandError::NotEnoughArguments.into());
+                        }
                     }
-                }
-                GraphicViewCommands::ZoomOut => {
-                    if let Some(multiplier_arg) = args.get(1) {
-                        self.state.plot_scale(
-                            false,
-                            multiplier_arg.parse::<f64>().map_err(|_| {
-                                CommandError::InvalidArguments(String::from(*multiplier_arg))
-                            })?,
-                        );
-                    } else {
-                        return Err(CommandError::NotEnoughArguments.into());
+                    GraphicViewCommands::ZoomOut => {
+                        if let Some(multiplier_arg) = args.get(1) {
+                            self.state.plot_scale(
+                                true,
+                                multiplier_arg.parse::<f64>().map_err(|_| {
+                                    CommandError::InvalidArguments(String::from(*multiplier_arg))
+                                })?,
+                            );
+                        } else {
+                            return Err(CommandError::NotEnoughArguments.into());
+                        }
                     }
-                }
-                GraphicViewCommands::MoveLeft => {
-                    if let Some(points_arg) = args.get(1) {
-                        self.state.plot_move(
-                            true,
-                            points_arg.parse::<f64>().map_err(|_| {
-                                CommandError::InvalidArguments(String::from(*points_arg))
-                            })?,
-                        );
-                    } else {
-                        return Err(CommandError::NotEnoughArguments.into());
+                    GraphicViewCommands::MoveLeft => {
+                        if let Some(points_arg) = args.get(1) {
+                            self.state.plot_move(
+                                true,
+                                points_arg.parse::<f64>().map_err(|_| {
+                                    CommandError::InvalidArguments(String::from(*points_arg))
+                                })?,
+                            );
+                        } else {
+                            return Err(CommandError::NotEnoughArguments.into());
+                        }
                     }
-                }
-                GraphicViewCommands::MoveRight => {
-                    if let Some(points_arg) = args.get(1) {
-                        self.state.plot_move(
-                            false,
-                            points_arg.parse::<f64>().map_err(|_| {
-                                CommandError::InvalidArguments(String::from(*points_arg))
-                            })?,
-                        );
-                    } else {
-                        return Err(CommandError::NotEnoughArguments.into());
+                    GraphicViewCommands::MoveRight => {
+                        if let Some(points_arg) = args.get(1) {
+                            self.state.plot_move(
+                                false,
+                                points_arg.parse::<f64>().map_err(|_| {
+                                    CommandError::InvalidArguments(String::from(*points_arg))
+                                })?,
+                            );
+                        } else {
+                            return Err(CommandError::NotEnoughArguments.into());
+                        }
                     }
-                }
-
-                GraphicViewCommands::CloseWorkingView => {
-                    self.state.delete_current_plot();
-                }
-                GraphicViewCommands::SwitchWorkingView => {
-                    if let Some(points_arg) = args.get(1) {
-                        self.state
-                            .change_current_plot(points_arg.parse::<u32>().map_err(|_| {
-                                CommandError::InvalidArguments(String::from(*points_arg))
-                            })?);
-                    } else {
-                        return Err(CommandError::NotEnoughArguments.into());
+                    GraphicViewCommands::CloseWorkingView => {
+                        self.state.delete_current_plot();
                     }
-                }
+                    GraphicViewCommands::SwitchWorkingView => {
+                        if let Some(points_arg) = args.get(1) {
+                            self.state
+                                .change_current_plot(points_arg.parse::<u32>().map_err(|_| {
+                                    CommandError::InvalidArguments(String::from(*points_arg))
+                                })?);
+                        } else {
+                            return Err(CommandError::NotEnoughArguments.into());
+                        }
+                    }
+                };
             }
-            state.borrow_mut().command = None;
         }
         Ok(())
     }
