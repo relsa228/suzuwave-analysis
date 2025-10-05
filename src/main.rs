@@ -1,6 +1,5 @@
 // TODO:
 // add command cache && implement arrow up/down keys
-// add command cursor && implement arrow left/right keys
 //
 // add fft, sft, filters, wavelet
 // add files name tabs

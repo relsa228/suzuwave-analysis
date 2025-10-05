@@ -1,15 +1,12 @@
 use anyhow::Error;
 use ratatui::{
     style::{Color, Style},
-    text::{Line, Span, Text},
+    text::{Line, Span},
 };
 
 use crate::{
     models::command_console::style::CommandConsoleStyle,
-    shared::constants::{
-        command::{DEFAULT_COMMAND_PREFIX, DEFAULT_CURSOR},
-        general::DEFAULT_COLOR,
-    },
+    shared::constants::command::{BUFFER_SIZE, DEFAULT_COMMAND_PREFIX, DEFAULT_CURSOR},
 };
 
 pub struct CommandConsoleState {
@@ -18,6 +15,7 @@ pub struct CommandConsoleState {
     style: CommandConsoleStyle,
     cursor_position: usize,
     command_history: Vec<String>,
+    history_cursor: usize,
 }
 
 impl CommandConsoleState {
@@ -28,7 +26,40 @@ impl CommandConsoleState {
             style: CommandConsoleStyle::new(),
             cursor_position: 1,
             command_history: Vec::new(),
+            history_cursor: 0,
         }
+    }
+
+    fn to_history_cache(&mut self) {
+        if !self.input.is_empty() {
+            self.command_history.push(self.input.clone());
+        }
+        if self.command_history.len() > BUFFER_SIZE {
+            self.command_history.remove(0);
+        }
+        self.history_cursor = self.command_history.len();
+    }
+
+    pub fn move_history_cursor(&mut self, forward: bool) {
+        self.history_cursor = if !forward {
+            if self.history_cursor + 1 < self.command_history.len() {
+                self.history_cursor + 1
+            } else {
+                0
+            }
+        } else {
+            if self.history_cursor == 0 {
+                self.command_history.len() - 1
+            } else {
+                self.history_cursor - 1
+            }
+        };
+        self.input = self
+            .command_history
+            .get(self.history_cursor)
+            .cloned()
+            .unwrap_or_default();
+        self.cursor_position = self.input.len();
     }
 
     pub fn cursor_move(&mut self, left: bool) {
@@ -87,6 +118,7 @@ impl CommandConsoleState {
 
     pub fn input_and_flush(&mut self) -> String {
         let input = self.input.clone();
+        self.to_history_cache();
         self.flush_input();
         input
     }

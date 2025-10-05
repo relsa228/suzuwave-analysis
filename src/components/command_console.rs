@@ -41,10 +41,22 @@ impl CommandConsoleComponent {
                 }
             }
             (_, KeyCode::Left) => {
-                self.state.cursor_move(true);
+                if !self.state.is_input_error() {
+                    self.state.cursor_move(true);
+                }
             }
             (_, KeyCode::Right) => {
-                self.state.cursor_move(false);
+                if !self.state.is_input_error() {
+                    self.state.cursor_move(false);
+                }
+            }
+            (_, KeyCode::Up) => {
+                self.state.clear_error();
+                self.state.move_history_cursor(true);
+            }
+            (_, KeyCode::Down) => {
+                self.state.clear_error();
+                self.state.move_history_cursor(false);
             }
             (_, KeyCode::Enter) => {
                 if !self.state.is_input_error() {
