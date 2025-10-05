@@ -1,43 +1,27 @@
-// TODO: add --help && --version
-// add about && help for views (similar content with --help and --version)
-// add fft, filters, wavelet
+// TODO:
+// add command cache && implement arrow up/down keys
+// add command cursor && implement arrow left/right keys
+//
+// add fft, sft, filters, wavelet
 // add files name tabs
+//
 // basic impl for file explorer
+//
 // add docs
+//
 // add mouse events
 
 use clap::Parser;
-use std::path::Path;
-use suzuwave::app::App;
-
-#[derive(Parser, Debug)]
-#[command(author, disable_help_flag = true, disable_version_flag = true)]
-struct Args {
-    #[arg(short)]
-    f: Option<String>,
-
-    #[arg(short)]
-    v: bool,
-    #[arg(long)]
-    version: bool,
-
-    #[arg(short)]
-    h: bool,
-    #[arg(long)]
-    help: bool,
-}
+use suzu::{app::App, models::cli::args::Args, utils::cli_helper::CliHelper};
 
 fn main() -> color_eyre::Result<()> {
-    let args = Args::parse();
+    let cli_helper = CliHelper::new(Args::parse());
+    if cli_helper.version() || cli_helper.help() {
+        return Ok(());
+    }
 
     color_eyre::install()?;
-    let terminal = ratatui::init();
-    let app = if let Some(f) = args.f {
-        let path = Path::new(f.as_str());
-        App::new(if path.exists() { Some(path) } else { None }).run(terminal)
-    } else {
-        App::new(None).run(terminal)
-    };
     ratatui::restore();
-    app
+    let terminal = ratatui::init();
+    App::new(cli_helper.process_path()).run(terminal)
 }

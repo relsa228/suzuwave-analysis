@@ -10,7 +10,13 @@ use ratatui::{
         canvas::{self, Canvas, Context},
     },
 };
-use std::{cell::RefCell, collections::HashMap, path::Path, rc::Rc, str::FromStr};
+use std::{
+    cell::RefCell,
+    collections::HashMap,
+    path::{Path, PathBuf},
+    rc::Rc,
+    str::FromStr,
+};
 
 use crate::{
     clients::{files::vibric::VibricReadingClient, traits::file_read_only::FileReadOnly},
@@ -32,7 +38,7 @@ pub struct GraphicViewComponent {
 }
 
 impl GraphicViewComponent {
-    pub fn new(initial_signal_file: Option<&Path>) -> Self {
+    pub fn new(initial_signal_file: Option<PathBuf>) -> Self {
         let mut file_parsers: HashMap<FileType, Box<dyn FileReadOnly>> = HashMap::new();
         file_parsers.insert(FileType::Vibric, Box::new(VibricReadingClient::new()));
         let mut instance = Self {
@@ -81,7 +87,7 @@ impl GraphicViewComponent {
                                 ))
                                 .into());
                             }
-                            self.add_plot_from_file(&file_path)?;
+                            self.add_plot_from_file(file_path.to_path_buf())?;
                         } else {
                             return Err(CommandError::NotEnoughArguments.into());
                         }
@@ -183,7 +189,7 @@ impl GraphicViewComponent {
         f.render_widget(chart, rect);
     }
 
-    fn add_plot_from_file(&mut self, path: &Path) -> Result<()> {
+    fn add_plot_from_file(&mut self, path: PathBuf) -> Result<()> {
         if let Some(extension) = path.extension() {
             let parser = self
                 .file_parsers

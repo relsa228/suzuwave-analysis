@@ -3,8 +3,12 @@ pub struct ApplicationState {
     is_input_mode: bool,
     is_static_mode: bool,
 
-    file_explorer_size: u16,
     workspace_size: u16,
+    version_component_size: u16,
+    help_component_size: u16,
+
+    graphic_workspace_size: u16,
+    file_explorer_size: u16,
 
     command: Option<String>,
 }
@@ -16,7 +20,10 @@ impl ApplicationState {
             is_input_mode: false,
             is_static_mode: false,
             file_explorer_size: 15,
-            workspace_size: 85,
+            graphic_workspace_size: 85,
+            workspace_size: 100,
+            version_component_size: 0,
+            help_component_size: 0,
             command: None,
         }
     }
@@ -33,8 +40,20 @@ impl ApplicationState {
         self.file_explorer_size
     }
 
+    pub fn graphic_workspace_size(&self) -> u16 {
+        self.graphic_workspace_size
+    }
+
     pub fn workspace_size(&self) -> u16 {
         self.workspace_size
+    }
+
+    pub fn version_component_size(&self) -> u16 {
+        self.version_component_size
+    }
+
+    pub fn help_component_size(&self) -> u16 {
+        self.help_component_size
     }
 
     pub fn command(&self) -> Option<String> {
@@ -53,25 +72,34 @@ impl ApplicationState {
     pub fn to_static_mode(&mut self) {
         self.is_input_mode = false;
         self.is_static_mode = true;
-        self.file_explorer_size = 15;
-        self.workspace_size = 85;
+        self.version_component_size = 0;
+        self.help_component_size = 0;
+        self.workspace_size = 100;
+    }
+
+    pub fn show_version(&mut self) {
+        self.to_static_mode();
+        self.workspace_size = 0;
+        self.version_component_size = 100;
+    }
+
+    pub fn show_help(&mut self) {
+        self.to_static_mode();
+        self.workspace_size = 0;
+        self.help_component_size = 100;
     }
 
     pub fn quit(&mut self) {
         self.is_running = false;
     }
 
-    pub fn change_file_explorer_visibility(&mut self, visibility: bool) {
-        if visibility {
+    pub fn change_file_explorer_visibility(&mut self) {
+        if self.file_explorer_size == 0 {
             self.file_explorer_size = 15;
-            self.workspace_size = 85;
+            self.graphic_workspace_size = 85;
         } else {
             self.file_explorer_size = 0;
-            self.workspace_size = 100;
+            self.graphic_workspace_size = 100;
         }
-    }
-
-    pub fn is_file_explorer_visible(&self) -> bool {
-        self.file_explorer_size > 0
     }
 }

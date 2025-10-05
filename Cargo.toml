@@ -1,5 +1,5 @@
 [package]
-name = "suzuwave"
+name = "suzu"
 version = "0.1.0"
 description = "An opensource lightweight analysis tool for various types of signal files"
 authors = ["Arciemij Bokun <scientificrelsa@gmail.com>"]

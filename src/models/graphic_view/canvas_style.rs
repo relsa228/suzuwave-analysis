@@ -3,6 +3,8 @@ use ratatui::{
     widgets::canvas::{Map, MapResolution},
 };
 
+use crate::shared::constants::general::DEFAULT_COLOR;
+
 pub struct GraphicViewStyle {
     canvas_color: Color,
     canvas_steps: u32,
@@ -12,11 +14,11 @@ pub struct GraphicViewStyle {
 impl GraphicViewStyle {
     pub fn new() -> Self {
         Self {
-            canvas_color: Color::LightYellow,
+            canvas_color: DEFAULT_COLOR,
             canvas_steps: 17,
             map: Map {
                 resolution: MapResolution::Low,
-                color: Color::LightYellow,
+                color: DEFAULT_COLOR,
             },
         }
     }
