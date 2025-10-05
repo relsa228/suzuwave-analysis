@@ -31,12 +31,20 @@ impl CommandConsoleComponent {
                 self.state.flush_input();
             }
             (_, KeyCode::Char(c)) => {
-                if application_state.borrow().is_input_mode() {
+                if application_state.borrow().is_input_mode() && !self.state.is_input_error() {
                     self.state.push_char(c);
                 }
             }
             (_, KeyCode::Backspace) => {
-                self.state.pop_char();
+                if !self.state.is_input_error() {
+                    self.state.remove_char();
+                }
+            }
+            (_, KeyCode::Left) => {
+                self.state.cursor_move(true);
+            }
+            (_, KeyCode::Right) => {
+                self.state.cursor_move(false);
             }
             (_, KeyCode::Enter) => {
                 if !self.state.is_input_error() {
@@ -57,12 +65,17 @@ impl CommandConsoleComponent {
     }
 
     pub fn to_input_mode(&mut self) {
-        self.state.style_as_mut().set_borders_color(Color::Green);
-        self.state.style_as_mut().set_input_color(Color::Green);
+        if !self.state.is_input_error() {
+            self.state.style_as_mut().set_borders_color(Color::Green);
+            self.state.style_as_mut().set_input_color(Color::Green);
+        } else {
+            self.state.style_as_mut().set_borders_color(Color::Red);
+            self.state.style_as_mut().set_input_color(Color::Red);
+        }
     }
 
     pub fn render(&mut self, f: &mut Frame, rect: Rect) {
-        let input_widget = Paragraph::new(self.state.input())
+        let input_widget = Paragraph::new(self.state.render_input())
             .style(Style::default().fg(self.state.style().input_color()))
             .block(
                 Block::default()
@@ -74,7 +87,7 @@ impl CommandConsoleComponent {
     }
 
     pub fn disable_input_mode(&mut self) {
-        self.state.flush_input();
+        //self.state.flush_input();
         self.state
             .style_as_mut()
             .set_borders_color(Color::LightGreen);

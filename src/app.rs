@@ -15,7 +15,7 @@ use crate::{
     },
     shared::{
         commands::general::GeneralCommands,
-        constants::{command::DEFAULT_COMMAND, general::DEFAULT_COLOR},
+        constants::{command::DEFAULT_COMMAND_PREFIX, general::DEFAULT_COLOR},
         errors::commands::CommandError,
     },
     states::app::ApplicationState,
@@ -136,7 +136,7 @@ impl App {
         let cmd = app_state.command().clone();
         if let Some(cmd) = cmd {
             let args = cmd.split_whitespace().collect::<Vec<&str>>();
-            if args.is_empty() || args[0] == DEFAULT_COMMAND {
+            if args.is_empty() || args[0] == DEFAULT_COMMAND_PREFIX {
                 return Err(CommandError::EmptyCommand.into());
             }
             if let Ok(command) = GeneralCommands::from_str(args[0]) {

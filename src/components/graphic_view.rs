@@ -24,7 +24,7 @@ use crate::{
     shared::{
         commands::graphic_view::GraphicViewCommands,
         constants::{
-            command::DEFAULT_COMMAND,
+            command::DEFAULT_COMMAND_PREFIX,
             graphic_view::{DEFAULT_PLOT_X_MOVE, DEFAULT_PLOT_ZOOM_MULTIPLIER},
         },
         errors::{commands::CommandError, files::FileError},
@@ -73,7 +73,7 @@ impl GraphicViewComponent {
         let mut state_borrow = state.borrow_mut();
         if let Some(cmd) = state_borrow.command() {
             let args = cmd.split_whitespace().collect::<Vec<&str>>();
-            if args.is_empty() || args[0] == DEFAULT_COMMAND {
+            if args.is_empty() || args[0] == DEFAULT_COMMAND_PREFIX {
                 return Err(CommandError::EmptyCommand.into());
             }
             if let Ok(command) = GraphicViewCommands::from_str(args[0]) {
