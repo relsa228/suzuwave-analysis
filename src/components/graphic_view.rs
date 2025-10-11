@@ -21,6 +21,7 @@ use std::{
 use crate::{
     clients::{files::vibric::VibricReadingClient, traits::file_read_only::FileReadOnly},
     models::files::file_types::FileType,
+    services::graphic_process::GraphicProcessService,
     shared::{
         commands::graphic_view::GraphicViewCommands,
         constants::{
@@ -34,6 +35,7 @@ use crate::{
 
 pub struct GraphicViewComponent {
     state: GraphicViewState,
+    service: GraphicProcessService,
     file_parsers: HashMap<FileType, Box<dyn FileReadOnly>>,
 }
 
@@ -43,6 +45,7 @@ impl GraphicViewComponent {
         file_parsers.insert(FileType::Vibric, Box::new(VibricReadingClient::new()));
         let mut instance = Self {
             file_parsers: file_parsers,
+            service: GraphicProcessService::new(),
             state: GraphicViewState::new(),
         };
         if let Some(file) = initial_signal_file {
@@ -152,6 +155,11 @@ impl GraphicViewComponent {
                         } else {
                             return Err(CommandError::NotEnoughArguments.into());
                         }
+                    }
+                    GraphicViewCommands::FastFourierTransform => {
+                        let current_plot = self.state.current_dataset();
+                        let transformed = self.service.fft_forward(current_plot.data);
+                        self.state.add_plot(transformed);
                     }
                 };
                 state_borrow.set_command(None);

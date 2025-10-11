@@ -14,6 +14,9 @@ pub enum GraphicViewCommands {
     #[strum(serialize = ":mr")]
     MoveRight,
 
+    #[strum(serialize = ":fft")]
+    FastFourierTransform,
+
     #[strum(serialize = ":cwv")]
     CloseWorkingView,
     #[strum(serialize = ":swv")]

@@ -1,12 +1,10 @@
 // TODO:
-// add command cache && implement arrow up/down keys
-//
 // add fft, sft, filters, wavelet
 // add files name tabs
 //
 // basic impl for file explorer
 //
-// add docs
+// add docs && code refactoring
 //
 // add mouse events
 

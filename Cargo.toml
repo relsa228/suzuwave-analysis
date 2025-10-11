@@ -15,3 +15,4 @@ anyhow = "1"
 strum = "0.27"
 strum_macros = "0.27"
 clap = {version = "4", features = ["derive"]}
+rustfft = "6"
