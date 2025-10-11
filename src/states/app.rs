@@ -1,7 +1,15 @@
+use anyhow::Error;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ApplicationMode {
+    Input,
+    Error,
+    Static,
+}
+
 pub struct ApplicationState {
     is_running: bool,
-    is_input_mode: bool,
-    is_static_mode: bool,
+    mode: ApplicationMode,
 
     workspace_size: u16,
     version_component_size: u16,
@@ -11,20 +19,21 @@ pub struct ApplicationState {
     file_explorer_size: u16,
 
     command: Option<String>,
+    error: Option<String>,
 }
 
 impl ApplicationState {
     pub fn new() -> Self {
         Self {
             is_running: true,
-            is_input_mode: false,
-            is_static_mode: false,
+            mode: ApplicationMode::Static,
             file_explorer_size: 15,
             graphic_workspace_size: 85,
             workspace_size: 100,
             version_component_size: 0,
             help_component_size: 0,
             command: None,
+            error: None,
         }
     }
 
@@ -32,8 +41,8 @@ impl ApplicationState {
         self.is_running
     }
 
-    pub fn is_input_mode(&self) -> bool {
-        self.is_input_mode
+    pub fn mode(&self) -> ApplicationMode {
+        self.mode
     }
 
     pub fn file_explorer_size(&self) -> u16 {
@@ -64,14 +73,26 @@ impl ApplicationState {
         self.command = command;
     }
 
+    pub fn set_error(&mut self, error: Option<Error>) -> bool {
+        self.mode = ApplicationMode::Error;
+        self.error = if let Some(error) = error {
+            Some(error.to_string())
+        } else {
+            None
+        };
+        true
+    }
+
+    pub fn error(&self) -> Option<String> {
+        self.error.clone()
+    }
+
     pub fn to_input_mode(&mut self) {
-        self.is_input_mode = true;
-        self.is_static_mode = false;
+        self.mode = ApplicationMode::Input;
     }
 
     pub fn to_static_mode(&mut self) {
-        self.is_input_mode = false;
-        self.is_static_mode = true;
+        self.mode = ApplicationMode::Static;
         self.version_component_size = 0;
         self.help_component_size = 0;
         self.workspace_size = 100;

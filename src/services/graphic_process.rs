@@ -21,10 +21,11 @@ impl GraphicProcessService {
         let fft = self.planner.plan_fft_forward(buffer.len());
         fft.process(&mut buffer);
 
+        let n = buffer.len();
         buffer
             .iter()
             .enumerate()
-            .map(|(i, c)| Point::new(i as f64, c.norm()))
+            .map(|(i, c)| Point::new(i as f64, c.norm() / n as f64))
             .collect()
     }
 }

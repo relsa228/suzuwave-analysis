@@ -1,10 +1,9 @@
+use crate::{shared::constants::about::ABOUT_TITLE, states::about::AboutState};
 use ratatui::{
     Frame,
     layout::Rect,
     widgets::{Block, Paragraph},
 };
-
-use crate::{shared::constants::about::ABOUT_TITLE, states::about::AboutState};
 
 pub struct AboutComponent {
     state: AboutState,

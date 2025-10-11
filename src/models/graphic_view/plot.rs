@@ -1,3 +1,5 @@
+use ratatui::widgets::GraphType;
+
 use crate::models::graphic_view::point::Point;
 
 const MARGIN: f64 = 0.07;
@@ -9,6 +11,7 @@ pub struct GraphicViewPlot {
     pub y_min: f64,
     pub y_max: f64,
     pub data: Vec<Point>,
+    pub plot_type: GraphType,
 }
 
 impl GraphicViewPlot {
@@ -42,6 +45,7 @@ impl GraphicViewPlot {
             y_min,
             y_max,
             data,
+            plot_type: GraphType::Line,
         }
     }
 

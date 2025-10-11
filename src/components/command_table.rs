@@ -1,21 +1,20 @@
+use crate::{
+    shared::constants::command_table::{BLOCK_TITLE, COMMAND_LIST, COMMAND_LIST_TABLE_HEADERS},
+    states::command_table::CommandTableState,
+};
 use ratatui::{
     Frame,
     layout::Rect,
     widgets::{Block, BorderType, Borders, Row, Table},
 };
 
-use crate::{
-    shared::constants::command_table::{BLOCK_TITLE, COMMAND_LIST, COMMAND_LIST_TABLE_HEADERS},
-    states::command_table::CommandTableState,
-};
-
-pub struct CommandTable {
+pub struct CommandTableComponent {
     state: CommandTableState,
 }
 
-impl CommandTable {
+impl CommandTableComponent {
     pub fn new() -> Self {
-        CommandTable {
+        CommandTableComponent {
             state: CommandTableState::new(),
         }
     }

@@ -1,3 +1,17 @@
+use crate::{
+    clients::{files::vibric::VibricReadingClient, traits::file_read_only::FileReadOnly},
+    models::files::file_types::FileType,
+    services::graphic_process::GraphicProcessService,
+    shared::{
+        commands::graphic_view::GraphicViewCommands,
+        constants::{
+            command::DEFAULT_COMMAND_PREFIX,
+            graphic_view::{DEFAULT_PLOT_X_MOVE, DEFAULT_PLOT_ZOOM_MULTIPLIER},
+        },
+        errors::{commands::CommandError, files::FileError},
+    },
+    states::{app::ApplicationState, graphic_view::GraphicViewState},
+};
 use anyhow::Result;
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
@@ -18,35 +32,25 @@ use std::{
     str::FromStr,
 };
 
-use crate::{
-    clients::{files::vibric::VibricReadingClient, traits::file_read_only::FileReadOnly},
-    models::files::file_types::FileType,
-    services::graphic_process::GraphicProcessService,
-    shared::{
-        commands::graphic_view::GraphicViewCommands,
-        constants::{
-            command::DEFAULT_COMMAND_PREFIX,
-            graphic_view::{DEFAULT_PLOT_X_MOVE, DEFAULT_PLOT_ZOOM_MULTIPLIER},
-        },
-        errors::{commands::CommandError, files::FileError},
-    },
-    states::{app::ApplicationState, graphic_view::GraphicViewState},
-};
-
 pub struct GraphicViewComponent {
     state: GraphicViewState,
     service: GraphicProcessService,
+    app_state: Rc<RefCell<ApplicationState>>,
     file_parsers: HashMap<FileType, Box<dyn FileReadOnly>>,
 }
 
 impl GraphicViewComponent {
-    pub fn new(initial_signal_file: Option<PathBuf>) -> Self {
+    pub fn new(
+        initial_signal_file: Option<PathBuf>,
+        app_state: Rc<RefCell<ApplicationState>>,
+    ) -> Self {
         let mut file_parsers: HashMap<FileType, Box<dyn FileReadOnly>> = HashMap::new();
         file_parsers.insert(FileType::Vibric, Box::new(VibricReadingClient::new()));
         let mut instance = Self {
             file_parsers: file_parsers,
             service: GraphicProcessService::new(),
             state: GraphicViewState::new(),
+            app_state,
         };
         if let Some(file) = initial_signal_file {
             let _ = instance.add_plot_from_file(file);
@@ -63,10 +67,14 @@ impl GraphicViewComponent {
                 self.state.plot_move(false, DEFAULT_PLOT_X_MOVE);
             }
             KeyCode::Up => {
-                self.state.plot_scale(true, DEFAULT_PLOT_ZOOM_MULTIPLIER);
+                if let Err(err) = self.state.plot_scale(true, DEFAULT_PLOT_ZOOM_MULTIPLIER) {
+                    self.app_state.borrow_mut().set_error(Some(err));
+                }
             }
             KeyCode::Down => {
-                self.state.plot_scale(false, DEFAULT_PLOT_ZOOM_MULTIPLIER);
+                if let Err(err) = self.state.plot_scale(false, DEFAULT_PLOT_ZOOM_MULTIPLIER) {
+                    self.app_state.borrow_mut().set_error(Some(err));
+                }
             }
             _ => {}
         }
@@ -102,7 +110,7 @@ impl GraphicViewComponent {
                                 multiplier_arg.parse::<f64>().map_err(|_| {
                                     CommandError::InvalidArguments(String::from(*multiplier_arg))
                                 })?,
-                            );
+                            )?;
                         } else {
                             return Err(CommandError::NotEnoughArguments.into());
                         }
@@ -114,7 +122,7 @@ impl GraphicViewComponent {
                                 multiplier_arg.parse::<f64>().map_err(|_| {
                                     CommandError::InvalidArguments(String::from(*multiplier_arg))
                                 })?,
-                            );
+                            )?;
                         } else {
                             return Err(CommandError::NotEnoughArguments.into());
                         }

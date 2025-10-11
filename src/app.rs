@@ -1,4 +1,3 @@
-use anyhow::Error;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use ratatui::{
     DefaultTerminal,
@@ -11,14 +10,14 @@ use std::{cell::RefCell, path::PathBuf, rc::Rc, str::FromStr};
 use crate::{
     components::{
         about::AboutComponent, command_console::CommandConsoleComponent,
-        command_table::CommandTable, graphic_view::GraphicViewComponent,
+        command_table::CommandTableComponent, graphic_view::GraphicViewComponent,
     },
     shared::{
         commands::general::GeneralCommands,
         constants::{command::DEFAULT_COMMAND_PREFIX, general::DEFAULT_COLOR},
         errors::commands::CommandError,
     },
-    states::app::ApplicationState,
+    states::app::{ApplicationMode, ApplicationState},
 };
 
 pub struct App {
@@ -26,7 +25,7 @@ pub struct App {
     command_console: CommandConsoleComponent,
     graphic_widget: GraphicViewComponent,
     version_component: AboutComponent,
-    help_component: CommandTable,
+    help_component: CommandTableComponent,
 }
 
 impl App {
@@ -34,10 +33,13 @@ impl App {
         let application_state = Rc::new(RefCell::new(ApplicationState::new()));
         Self {
             application_state: application_state.clone(),
-            command_console: CommandConsoleComponent::new(),
-            graphic_widget: GraphicViewComponent::new(initial_signal_file_path),
+            command_console: CommandConsoleComponent::new(application_state.clone()),
+            graphic_widget: GraphicViewComponent::new(
+                initial_signal_file_path,
+                application_state.clone(),
+            ),
             version_component: AboutComponent::new(),
-            help_component: CommandTable::new(),
+            help_component: CommandTableComponent::new(),
         }
     }
 
@@ -94,31 +96,25 @@ impl App {
         Ok(())
     }
 
+    #[allow(unused_must_use)]
     fn handle_crossterm_events(&mut self) -> color_eyre::Result<()> {
         match event::read()? {
             Event::Key(key) if key.kind == KeyEventKind::Press => {
-                if self.application_state.borrow().is_input_mode() {
-                    self.command_console
-                        .handle_key_events(key, self.application_state.clone());
-
-                    let mut error: Option<Error> = None;
-                    if let Err(err) = self
-                        .graphic_widget
+                let mode = self.application_state.borrow().mode();
+                if mode == ApplicationMode::Input || mode == ApplicationMode::Error {
+                    self.command_console.handle_key_events(key);
+                    self.graphic_widget
                         .update_from_state(self.application_state.clone())
+                        .is_err_and(|err| self.application_state.borrow_mut().set_error(Some(err)));
+                    self.update_from_state()
+                        .is_err_and(|err| self.application_state.borrow_mut().set_error(Some(err)));
+                    let mut state = self.application_state.borrow_mut();
+                    if state.error().is_none()
+                        && let Some(command) = state.command()
                     {
-                        error = Some(err);
-                    };
-                    if let Err(err) = self.update_from_state() {
-                        error = Some(err);
-                    };
-
-                    if let Some(error) = error {
-                        self.command_console.set_error(error);
-                    } else if let Some(command) = self.application_state.borrow().command() {
-                        self.command_console
-                            .set_error(CommandError::CommandSyntax(command).into());
+                        state.set_error(Some(CommandError::CommandSyntax(command).into()));
                     }
-                    self.application_state.borrow_mut().set_command(None);
+                    state.set_command(None);
                 } else {
                     self.graphic_widget.handle_key_events(key);
                     self.handle_key_events(key);
@@ -165,12 +161,10 @@ impl App {
                 self.application_state.borrow_mut().quit()
             }
             (_, KeyCode::Char('i') | KeyCode::Char('I')) => {
-                self.command_console.to_input_mode();
                 self.application_state.borrow_mut().to_input_mode()
             }
             (_, KeyCode::Esc) => {
                 self.application_state.borrow_mut().to_static_mode();
-                self.command_console.disable_input_mode();
             }
             _ => {}
         }

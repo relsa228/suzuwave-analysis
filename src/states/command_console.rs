@@ -1,4 +1,3 @@
-use anyhow::Error;
 use ratatui::{
     style::{Color, Style},
     text::{Line, Span},
@@ -123,15 +122,11 @@ impl CommandConsoleState {
         input
     }
 
-    pub fn is_input_error(&self) -> bool {
-        self.is_input_error
-    }
-
-    pub fn set_error(&mut self, error: Error) {
+    pub fn set_error(&mut self, error: String) {
         self.is_input_error = true;
         self.style_as_mut().set_input_color(Color::Red);
         self.style_as_mut().set_borders_color(Color::Red);
-        self.set_input(error.to_string());
+        self.set_input(error);
     }
 
     pub fn clear_error(&mut self) {
