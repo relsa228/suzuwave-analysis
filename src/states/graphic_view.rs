@@ -1,5 +1,5 @@
 use crate::{
-    models::graphic_view::{canvas_style::GraphicViewStyle, plot::GraphicViewPlot, point::Point},
+    models::graphic_view::{canvas_style::GraphicViewStyle, plot::GraphicViewPlot},
     shared::{
         constants::graphic_view::{ZOOM_IN_COEFFICIENT, ZOOM_OUT_COEFFICIENT},
         errors::graphic_view::GraphicViewError,
@@ -113,9 +113,8 @@ impl GraphicViewState {
         }
     }
 
-    pub fn add_plot(&mut self, data: Vec<Point>) {
-        let current_plot = GraphicViewPlot::new(data);
-        self.plots.push(current_plot);
+    pub fn add_plot(&mut self, data: GraphicViewPlot) {
+        self.plots.push(data);
         self.current_plot_id = self.plots.len() - 1;
     }
 

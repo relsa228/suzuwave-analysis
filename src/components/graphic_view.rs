@@ -1,7 +1,7 @@
 use crate::{
     clients::{files::vibric::VibricReadingClient, traits::file_read_only::FileReadOnly},
     models::files::file_types::FileType,
-    services::graphic_process::GraphicProcessService,
+    services::graphic_process::{FftFilterType, GraphicProcessService},
     shared::{
         commands::graphic_view::GraphicViewCommands,
         constants::{
@@ -20,7 +20,7 @@ use ratatui::{
     style::{Color, Style},
     symbols::{self, Marker},
     widgets::{
-        Axis, Block, Borders, Chart, Dataset, GraphType,
+        Axis, Block, Borders, Chart, Dataset,
         canvas::{self, Canvas, Context},
     },
 };
@@ -165,9 +165,23 @@ impl GraphicViewComponent {
                         }
                     }
                     GraphicViewCommands::FastFourierTransform => {
-                        let current_plot = self.state.current_dataset();
-                        let transformed = self.service.fft_forward(current_plot.data);
-                        self.state.add_plot(transformed);
+                        let mut current_plot = self.state.current_dataset();
+                        current_plot.data = self.service.fft_forward(current_plot.data);
+                        self.state.add_plot(current_plot);
+                    }
+                    GraphicViewCommands::FftFilterLowPass => {
+                        if let Some(points_arg) = args.get(1) {
+                            let mut current_plot = self.state.current_dataset();
+                            current_plot.data = self.service.apply_filter(
+                                &current_plot,
+                                FftFilterType::LowPass(points_arg.parse::<f64>().map_err(
+                                    |_| CommandError::InvalidArguments(String::from(*points_arg)),
+                                )?),
+                            );
+                            self.state.add_plot(current_plot);
+                        } else {
+                            return Err(CommandError::NotEnoughArguments.into());
+                        }
                     }
                 };
                 state_borrow.set_command(None);
@@ -177,13 +191,14 @@ impl GraphicViewComponent {
     }
 
     pub fn render(&mut self, f: &mut Frame, rect: Rect) {
-        let current_dataset = &self.state.current_dataset().data_to_pure_coordinates();
+        let current_dataset = &self.state.current_dataset();
+        let pure_coordinates = current_dataset.data_to_pure_coordinates();
         let datasets = vec![
             Dataset::default()
                 .marker(symbols::Marker::HalfBlock)
                 .style(Style::default().fg(Color::Cyan))
-                .graph_type(GraphType::Line)
-                .data(&current_dataset),
+                .graph_type(current_dataset.graph_type())
+                .data(&pure_coordinates),
         ];
 
         let chart = Chart::new(datasets)
@@ -224,13 +239,13 @@ impl GraphicViewComponent {
         let step = (self.state.x_max() - self.state.x_min()) / (steps) as f64;
         (1..steps).for_each(|i| {
             let val = self.state.x_min() + step * i as f64;
-            context.print(val, self.state.y_min(), format!("{:.2}", val));
+            context.print(val, self.state.y_min(), format!("{:.4}", val));
         });
 
         let step = (self.state.y_max() - self.state.y_min()) / (steps) as f64;
         (1..steps).for_each(|i| {
             let val = self.state.y_min() + step * i as f64;
-            context.print(self.state.x_min(), val, format!("{:.2}", val));
+            context.print(self.state.x_min(), val, format!("{:.4}", val));
         });
     }
 

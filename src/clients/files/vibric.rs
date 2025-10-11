@@ -1,4 +1,5 @@
 use anyhow::Result;
+use ratatui::widgets::GraphType;
 use std::{
     fs::File,
     io::{BufReader, Read},
@@ -8,10 +9,12 @@ use crate::{
     clients::traits::file_read_only::FileReadOnly,
     models::{
         files::{signal_file::SignalFile, signal_header::SignalHeader},
-        graphic_view::point::Point,
+        graphic_view::{plot::GraphicViewPlot, point::Point},
     },
     shared::errors::files::FileError,
 };
+
+type ParsedFileData = (Vec<Point>, f32);
 
 const VIBRIC_SIGNATURE: &[u8] = b"TMB1";
 
@@ -33,10 +36,8 @@ impl VibricReadingClient {
         reader.read_exact(&mut buf)?;
         Ok(f32::from_le_bytes(buf))
     }
-}
 
-impl FileReadOnly for VibricReadingClient {
-    fn parse_signal_file(&self, path: &str, channel: usize) -> Result<Vec<Point>> {
+    fn parse_bin_file(&self, path: &str, channel: usize) -> Result<ParsedFileData> {
         let mut reader = BufReader::new(File::open(path)?);
         let mut signature = [0u8; 4];
         reader.read_exact(&mut signature)?;
@@ -59,6 +60,9 @@ impl FileReadOnly for VibricReadingClient {
             max_value: self.read_f32(&mut reader)?,
             min_value: self.read_f32(&mut reader)?,
         };
+
+        let sample_rate = header.freq_resolution * header.sample_size as f32;
+
         let mut data = Vec::with_capacity(header.data_size as usize);
         for _ in 0..header.data_size {
             data.push(self.read_f32(&mut reader)?);
@@ -77,6 +81,13 @@ impl FileReadOnly for VibricReadingClient {
             }
         }
 
-        Ok(points)
+        Ok((points, sample_rate))
+    }
+}
+
+impl FileReadOnly for VibricReadingClient {
+    fn parse_signal_file(&self, path: &str, channel: usize) -> Result<GraphicViewPlot> {
+        let (points, sample_rate) = self.parse_bin_file(path, channel)?;
+        Ok(GraphicViewPlot::new(points, GraphType::Line, sample_rate))
     }
 }

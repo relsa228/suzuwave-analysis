@@ -1,8 +1,7 @@
 // TODO:
-// add fft, sft, filters, wavelet
-// add files name tabs
+// add sft, filters, wavelet
 //
-// basic impl for file explorer
+// basic impl for chart explorer
 //
 // add docs && code refactoring
 //

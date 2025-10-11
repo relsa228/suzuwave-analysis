@@ -12,10 +12,11 @@ pub struct GraphicViewPlot {
     pub y_max: f64,
     pub data: Vec<Point>,
     pub plot_type: GraphType,
+    pub sample_rate: f32,
 }
 
 impl GraphicViewPlot {
-    pub fn new(data: Vec<Point>) -> Self {
+    pub fn new(data: Vec<Point>, plot_type: GraphType, sample_rate: f32) -> Self {
         let x_min = data
             .iter()
             .map(|p| p.x())
@@ -45,8 +46,13 @@ impl GraphicViewPlot {
             y_min,
             y_max,
             data,
-            plot_type: GraphType::Line,
+            plot_type,
+            sample_rate,
         }
+    }
+
+    pub fn sample_rate(&self) -> f32 {
+        self.sample_rate
     }
 
     pub fn data_to_pure_coordinates(&self) -> Vec<(f64, f64)> {
@@ -54,5 +60,9 @@ impl GraphicViewPlot {
             .iter()
             .map(|point| (point.x(), point.y()))
             .collect::<Vec<(f64, f64)>>()
+    }
+
+    pub fn graph_type(&self) -> GraphType {
+        self.plot_type
     }
 }

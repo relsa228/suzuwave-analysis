@@ -16,6 +16,8 @@ pub enum GraphicViewCommands {
 
     #[strum(serialize = ":fft")]
     FastFourierTransform,
+    #[strum(serialize = ":fl")]
+    FftFilterLowPass,
 
     #[strum(serialize = ":cwv")]
     CloseWorkingView,
