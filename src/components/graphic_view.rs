@@ -166,7 +166,9 @@ impl GraphicViewComponent {
                     }
                     GraphicViewCommands::FastFourierTransform => {
                         let mut current_plot = self.state.current_dataset();
-                        current_plot.data = self.service.fft_forward(current_plot.data);
+                        current_plot.data = self
+                            .service
+                            .fft_forward(current_plot.data, current_plot.sample_rate as f64);
                         self.state.add_plot(current_plot);
                     }
                     GraphicViewCommands::FftFilterLowPass => {
