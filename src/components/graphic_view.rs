@@ -174,7 +174,7 @@ impl GraphicViewComponent {
                     GraphicViewCommands::FftFilterLowPass => {
                         if let Some(points_arg) = args.get(1) {
                             let mut current_plot = self.state.current_dataset();
-                            current_plot.data = self.service.apply_filter(
+                            current_plot.data = self.service.apply_fft_filter(
                                 &current_plot,
                                 FftFilterType::LowPass(points_arg.parse::<f64>().map_err(
                                     |_| CommandError::InvalidArguments(String::from(*points_arg)),

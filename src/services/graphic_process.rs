@@ -40,31 +40,31 @@ impl GraphicProcessService {
         shifted
             .iter()
             .enumerate()
-            .map(|(i, c)| {
+            .filter_map(|(i, c)| {
                 let freq = (i as f64 - half as f64) * freq_res;
-                Point::new(freq, c.norm() / n as f64 * 2.0)
+                let norm = c.norm() / n as f64 * 2.0;
+                if freq < 0.0 || norm < 0.1 {
+                    None
+                } else {
+                    Some(Point::new(freq, norm))
+                }
             })
             .collect()
     }
 
-    pub fn apply_filter(&self, plot: &GraphicViewPlot, filter: FftFilterType) -> Vec<Point> {
-        let n = plot.data.len();
-        let freq_resolution = plot.sample_rate / n as f32;
-
+    pub fn apply_fft_filter(&self, plot: &GraphicViewPlot, filter: FftFilterType) -> Vec<Point> {
         plot.data
             .iter()
-            .map(|p| {
-                let freq = p.x() as f32 * freq_resolution;
-                let pass = match filter {
-                    FftFilterType::LowPass(cutoff) => freq as f64 <= cutoff,
-                    FftFilterType::HighPass(cutoff) => freq as f64 >= cutoff,
-                    FftFilterType::BandPass(low, high) => freq as f64 >= low && freq as f64 <= high,
-                    FftFilterType::BandStop(low, high) => freq as f64 <= low || freq as f64 >= high,
-                };
-                if pass {
-                    Point::new(freq as f64, p.y())
+            .filter_map(|p| {
+                if match filter {
+                    FftFilterType::LowPass(cutoff) => p.x() <= cutoff,
+                    FftFilterType::HighPass(cutoff) => p.x() >= cutoff,
+                    FftFilterType::BandPass(low, high) => p.x() >= low && p.x() <= high,
+                    FftFilterType::BandStop(low, high) => p.x() <= low || p.x() >= high,
+                } {
+                    Some(p.clone())
                 } else {
-                    Point::new(freq as f64, 0.0)
+                    None
                 }
             })
             .collect()
