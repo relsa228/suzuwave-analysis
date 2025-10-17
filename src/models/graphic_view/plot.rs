@@ -51,18 +51,10 @@ impl GraphicViewPlot {
         }
     }
 
-    pub fn sample_rate(&self) -> f32 {
-        self.sample_rate
-    }
-
     pub fn data_to_pure_coordinates(&self) -> Vec<(f64, f64)> {
         self.data
             .iter()
             .map(|point| (point.x(), point.y()))
             .collect::<Vec<(f64, f64)>>()
-    }
-
-    pub fn graph_type(&self) -> GraphType {
-        self.plot_type
     }
 }

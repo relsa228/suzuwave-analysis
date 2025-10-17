@@ -1,5 +1,5 @@
 // TODO:
-// add sft, filters, wavelet
+// add stft
 //
 // basic impl for chart explorer
 //

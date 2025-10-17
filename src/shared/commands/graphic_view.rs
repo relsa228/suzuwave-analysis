@@ -16,8 +16,18 @@ pub enum GraphicViewCommands {
 
     #[strum(serialize = ":fft")]
     FastFourierTransform,
-    #[strum(serialize = ":fl")]
+    #[strum(serialize = ":sft")]
+    ShortTimeFourierTransform,
+    #[strum(serialize = ":flp")]
     FftFilterLowPass,
+    #[strum(serialize = ":fhp")]
+    FftFilterHighPass,
+    #[strum(serialize = ":fbp")]
+    FftFilterBandPass,
+    #[strum(serialize = ":fbs")]
+    FftFilterBandStop,
+    #[strum(serialize = ":hwt")]
+    HaarWaveletTransform,
 
     #[strum(serialize = ":cwv")]
     CloseWorkingView,

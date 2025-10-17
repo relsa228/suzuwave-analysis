@@ -1,6 +1,6 @@
 use crate::{
     clients::{files::vibric::VibricReadingClient, traits::file_read_only::FileReadOnly},
-    models::files::file_types::FileType,
+    models::{files::file_types::FileType, graphic_view::plot::GraphicViewPlot},
     services::graphic_process::{FftFilterType, GraphicProcessService},
     shared::{
         commands::graphic_view::GraphicViewCommands,
@@ -165,25 +165,133 @@ impl GraphicViewComponent {
                         }
                     }
                     GraphicViewCommands::FastFourierTransform => {
-                        let mut current_plot = self.state.current_dataset();
-                        current_plot.data = self
-                            .service
-                            .fft_forward(current_plot.data, current_plot.sample_rate as f64);
-                        self.state.add_plot(current_plot);
+                        let current_plot = self.state.current_dataset();
+                        let plot = GraphicViewPlot::new(
+                            self.service.fft_forward(&current_plot),
+                            current_plot.plot_type,
+                            current_plot.sample_rate,
+                        );
+                        self.state.add_plot(plot);
                     }
-                    GraphicViewCommands::FftFilterLowPass => {
-                        if let Some(points_arg) = args.get(1) {
-                            let mut current_plot = self.state.current_dataset();
-                            current_plot.data = self.service.apply_fft_filter(
-                                &current_plot,
-                                FftFilterType::LowPass(points_arg.parse::<f64>().map_err(
-                                    |_| CommandError::InvalidArguments(String::from(*points_arg)),
-                                )?),
+                    GraphicViewCommands::ShortTimeFourierTransform => {
+                        if let (Some(window_size), Some(hop_size)) = (args.get(1), args.get(2)) {
+                            let current_plot = self.state.current_dataset();
+                            let plot = GraphicViewPlot::new(
+                                self.service.stft_forward(
+                                    &current_plot,
+                                    window_size.parse::<usize>().map_err(|_| {
+                                        CommandError::InvalidArguments(String::from(*window_size))
+                                    })?,
+                                    hop_size.parse::<usize>().map_err(|_| {
+                                        CommandError::InvalidArguments(String::from(*hop_size))
+                                    })?,
+                                ),
+                                current_plot.plot_type,
+                                current_plot.sample_rate,
                             );
-                            self.state.add_plot(current_plot);
+                            self.state.add_plot(plot);
                         } else {
                             return Err(CommandError::NotEnoughArguments.into());
                         }
+                    }
+                    GraphicViewCommands::FftFilterLowPass => {
+                        if let Some(points_arg) = args.get(1) {
+                            let current_plot = self.state.current_dataset();
+                            let plot = GraphicViewPlot::new(
+                                self.service.apply_fft_filter(
+                                    &current_plot,
+                                    FftFilterType::LowPass(points_arg.parse::<f64>().map_err(
+                                        |_| {
+                                            CommandError::InvalidArguments(String::from(
+                                                *points_arg,
+                                            ))
+                                        },
+                                    )?),
+                                ),
+                                current_plot.plot_type,
+                                current_plot.sample_rate,
+                            );
+                            self.state.add_plot(plot);
+                        } else {
+                            return Err(CommandError::NotEnoughArguments.into());
+                        }
+                    }
+                    GraphicViewCommands::FftFilterHighPass => {
+                        if let Some(points_arg) = args.get(1) {
+                            let current_plot = self.state.current_dataset();
+                            let plot = GraphicViewPlot::new(
+                                self.service.apply_fft_filter(
+                                    &current_plot,
+                                    FftFilterType::HighPass(points_arg.parse::<f64>().map_err(
+                                        |_| {
+                                            CommandError::InvalidArguments(String::from(
+                                                *points_arg,
+                                            ))
+                                        },
+                                    )?),
+                                ),
+                                current_plot.plot_type,
+                                current_plot.sample_rate,
+                            );
+                            self.state.add_plot(plot);
+                        } else {
+                            return Err(CommandError::NotEnoughArguments.into());
+                        }
+                    }
+                    GraphicViewCommands::FftFilterBandPass => {
+                        if let (Some(low_band), Some(high_band)) = (args.get(1), args.get(2)) {
+                            let current_plot = self.state.current_dataset();
+                            let plot = GraphicViewPlot::new(
+                                self.service.apply_fft_filter(
+                                    &current_plot,
+                                    FftFilterType::BandPass(
+                                        low_band.parse::<f64>().map_err(|_| {
+                                            CommandError::InvalidArguments(String::from(*low_band))
+                                        })?,
+                                        low_band.parse::<f64>().map_err(|_| {
+                                            CommandError::InvalidArguments(String::from(*high_band))
+                                        })?,
+                                    ),
+                                ),
+                                current_plot.plot_type,
+                                current_plot.sample_rate,
+                            );
+                            self.state.add_plot(plot);
+                        } else {
+                            return Err(CommandError::NotEnoughArguments.into());
+                        }
+                    }
+                    GraphicViewCommands::FftFilterBandStop => {
+                        if let (Some(low_band), Some(high_band)) = (args.get(1), args.get(2)) {
+                            let current_plot = self.state.current_dataset();
+                            let plot = GraphicViewPlot::new(
+                                self.service.apply_fft_filter(
+                                    &current_plot,
+                                    FftFilterType::BandStop(
+                                        low_band.parse::<f64>().map_err(|_| {
+                                            CommandError::InvalidArguments(String::from(*low_band))
+                                        })?,
+                                        low_band.parse::<f64>().map_err(|_| {
+                                            CommandError::InvalidArguments(String::from(*high_band))
+                                        })?,
+                                    ),
+                                ),
+                                current_plot.plot_type,
+                                current_plot.sample_rate,
+                            );
+                            self.state.add_plot(plot);
+                        } else {
+                            return Err(CommandError::NotEnoughArguments.into());
+                        }
+                    }
+                    GraphicViewCommands::HaarWaveletTransform => {
+                        let current_plot = self.state.current_dataset();
+                        let plot = GraphicViewPlot::new(
+                            self.service.haar_wavelet_transform(&current_plot),
+                            current_plot.plot_type,
+                            current_plot.sample_rate,
+                        );
+                        self.state.add_plot(plot);
                     }
                 };
                 state_borrow.set_command(None);
@@ -199,7 +307,7 @@ impl GraphicViewComponent {
             Dataset::default()
                 .marker(symbols::Marker::HalfBlock)
                 .style(Style::default().fg(Color::Cyan))
-                .graph_type(current_dataset.graph_type())
+                .graph_type(current_dataset.plot_type)
                 .data(&pure_coordinates),
         ];
 
