@@ -66,21 +66,15 @@ impl ChartExplorerComponent {
     }
 
     pub fn update_from_state(&mut self) -> Result<()> {
-        let state_borrow = self.app_state.borrow();
-        let cmd = if let Some(cmd) = state_borrow.command() {
-            drop(state_borrow);
-            cmd
-        } else {
+        let mut state_borrow = self.app_state.borrow_mut();
+        let Some(cmd) = state_borrow.command() else {
             return Ok(());
         };
         let args = cmd.split_whitespace().collect::<Vec<&str>>();
         if args.is_empty() || args[0] == DEFAULT_COMMAND_PREFIX {
             return Err(CommandError::EmptyCommand.into());
         }
-        let command = if let Ok(command) = ChartExplorerCommands::from_str(args[0]) {
-            command
-        } else {
-            self.app_state.borrow_mut().set_command(None);
+        let Ok(command) = ChartExplorerCommands::from_str(args[0]) else {
             return Ok(());
         };
         match command {
@@ -110,7 +104,7 @@ impl ChartExplorerComponent {
                 self.add_chart_from_file(file_path.to_path_buf())?;
             }
         };
-
+        state_borrow.set_command(None);
         Ok(())
     }
 
