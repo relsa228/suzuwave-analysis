@@ -2,8 +2,6 @@ use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifier
 use ratatui::{
     DefaultTerminal,
     layout::{Constraint, Direction, Layout},
-    style::Style,
-    widgets::{Block, Borders},
 };
 use std::{cell::RefCell, path::PathBuf, rc::Rc, str::FromStr};
 
@@ -14,11 +12,7 @@ use crate::{
         command_table::CommandTableComponent,
     },
     shared::{
-        commands::general::GeneralCommands,
-        constants::{
-            chart_explorer::CHART_EXPLORER_WIDGET_NAME, command::DEFAULT_COMMAND_PREFIX,
-            general::DEFAULT_COLOR,
-        },
+        commands::general::GeneralCommands, constants::command::DEFAULT_COMMAND_PREFIX,
         errors::commands::CommandError,
     },
     states::app::{ApplicationMode, ApplicationState},
@@ -84,14 +78,7 @@ impl App {
                     .constraints([Constraint::Min(5), Constraint::Max(3)])
                     .split(workspace_chunks[1]);
 
-                f.render_widget(
-                    Block::default()
-                        .title(CHART_EXPLORER_WIDGET_NAME)
-                        .borders(Borders::ALL)
-                        .style(Style::default().fg(DEFAULT_COLOR)),
-                    workspace_chunks[0],
-                );
-
+                self.chart_explorer_widget.render(f, workspace_chunks[0]);
                 self.chart_view_widget.render(f, chart_workspace[0]);
                 self.command_console.render(f, chart_workspace[1]);
                 self.version_component.render(f, main_chunks[1]);

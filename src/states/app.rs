@@ -151,4 +151,8 @@ impl ApplicationState {
     pub fn change_current_chart(&mut self, id: u32) {
         self.current_chart_id = (id % self.charts.len() as u32) as usize;
     }
+
+    pub fn charts(&self) -> Vec<Rc<RefCell<ChartModel>>> {
+        self.charts.clone()
+    }
 }

@@ -3,18 +3,27 @@ use crate::{
     models::files::file_types::FileType,
     shared::{
         commands::chart_explorer::ChartExplorerCommands,
-        constants::command::DEFAULT_COMMAND_PREFIX,
+        constants::{
+            chart_explorer::CHART_EXPLORER_WIDGET_NAME, command::DEFAULT_COMMAND_PREFIX,
+            general::DEFAULT_COLOR,
+        },
         errors::{commands::CommandError, files::FileError},
     },
     states::app::ApplicationState,
 };
 use anyhow::Result;
-use ratatui::{Frame, layout::Rect};
+use ratatui::{
+    Frame,
+    layout::Rect,
+    style::{Color, Modifier, Style},
+    text::{Line, Span},
+    widgets::{Block, Borders, List, ListItem},
+};
+use std::cell::RefCell;
+use std::rc::Rc;
 use std::{
-    cell::RefCell,
     collections::HashMap,
     path::{Path, PathBuf},
-    rc::Rc,
     str::FromStr,
 };
 
@@ -85,7 +94,45 @@ impl ChartExplorerComponent {
         Ok(())
     }
 
-    pub fn render(&mut self, _f: &mut Frame, _rect: Rect) {}
+    pub fn render(&mut self, f: &mut Frame, rect: Rect) {
+        let items: Vec<ListItem> = self
+            .app_state
+            .borrow()
+            .charts()
+            .iter()
+            .map(|chart_rc| {
+                let chart = chart_rc.borrow();
+                let title_line = Line::from(Span::styled(
+                    chart.metadata.title.clone(),
+                    Style::default()
+                        .fg(Color::Yellow)
+                        .add_modifier(Modifier::BOLD),
+                ));
+                let desc_line = Line::from(Span::styled(
+                    chart.metadata.description.clone(),
+                    Style::default().fg(Color::Gray),
+                ));
+                ListItem::new(vec![title_line, desc_line])
+            })
+            .collect();
+
+        let list = List::new(items)
+            .block(
+                Block::default()
+                    .title(CHART_EXPLORER_WIDGET_NAME)
+                    .borders(Borders::ALL)
+                    .style(Style::default().fg(DEFAULT_COLOR)),
+            )
+            .highlight_style(
+                Style::default()
+                    .bg(Color::Blue)
+                    .fg(Color::White)
+                    .add_modifier(Modifier::BOLD),
+            )
+            .highlight_symbol("➤ ");
+
+        f.render_widget(list, rect);
+    }
 
     fn add_chart_from_file(&self, path: PathBuf) -> Result<()> {
         if let Some(extension) = path.extension() {
