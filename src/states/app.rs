@@ -15,7 +15,7 @@ pub struct ApplicationState {
     version_component_size: u16,
     help_component_size: u16,
 
-    graphic_workspace_size: u16,
+    chart_workspace_size: u16,
     file_explorer_size: u16,
 
     command: Option<String>,
@@ -28,7 +28,7 @@ impl ApplicationState {
             is_running: true,
             mode: ApplicationMode::Static,
             file_explorer_size: 15,
-            graphic_workspace_size: 85,
+            chart_workspace_size: 85,
             workspace_size: 100,
             version_component_size: 0,
             help_component_size: 0,
@@ -49,8 +49,8 @@ impl ApplicationState {
         self.file_explorer_size
     }
 
-    pub fn graphic_workspace_size(&self) -> u16 {
-        self.graphic_workspace_size
+    pub fn chart_workspace_size(&self) -> u16 {
+        self.chart_workspace_size
     }
 
     pub fn workspace_size(&self) -> u16 {
@@ -117,10 +117,10 @@ impl ApplicationState {
     pub fn change_file_explorer_visibility(&mut self) {
         if self.file_explorer_size == 0 {
             self.file_explorer_size = 15;
-            self.graphic_workspace_size = 85;
+            self.chart_workspace_size = 85;
         } else {
             self.file_explorer_size = 0;
-            self.graphic_workspace_size = 100;
+            self.chart_workspace_size = 100;
         }
     }
 }

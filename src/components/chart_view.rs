@@ -1,16 +1,16 @@
 use crate::{
     clients::{files::vibric::VibricReadingClient, traits::file_read_only::FileReadOnly},
-    models::{files::file_types::FileType, graphic_view::plot::GraphicViewPlot},
-    services::graphic_process::{FftFilterType, GraphicProcessService},
+    models::{chart_view::chart::ChartModel, files::file_types::FileType},
+    services::chart_processor::{ChartProcessingService, FftFilterType},
     shared::{
-        commands::graphic_view::GraphicViewCommands,
+        commands::chart_view::ChartViewCommands,
         constants::{
+            chart_view::{DEFAULT_CHART_X_MOVE, DEFAULT_CHART_ZOOM_MULTIPLIER},
             command::DEFAULT_COMMAND_PREFIX,
-            graphic_view::{DEFAULT_PLOT_X_MOVE, DEFAULT_PLOT_ZOOM_MULTIPLIER},
         },
         errors::{commands::CommandError, files::FileError},
     },
-    states::{app::ApplicationState, graphic_view::GraphicViewState},
+    states::{app::ApplicationState, chart_view::ChartViewState},
 };
 use anyhow::Result;
 use crossterm::event::{KeyCode, KeyEvent};
@@ -32,14 +32,14 @@ use std::{
     str::FromStr,
 };
 
-pub struct GraphicViewComponent {
-    state: GraphicViewState,
-    service: GraphicProcessService,
+pub struct ChartViewComponent {
+    state: ChartViewState,
+    service: ChartProcessingService,
     app_state: Rc<RefCell<ApplicationState>>,
     file_parsers: HashMap<FileType, Box<dyn FileReadOnly>>,
 }
 
-impl GraphicViewComponent {
+impl ChartViewComponent {
     pub fn new(
         initial_signal_file: Option<PathBuf>,
         app_state: Rc<RefCell<ApplicationState>>,
@@ -48,8 +48,8 @@ impl GraphicViewComponent {
         file_parsers.insert(FileType::Vibric, Box::new(VibricReadingClient::new()));
         let mut instance = Self {
             file_parsers: file_parsers,
-            service: GraphicProcessService::new(),
-            state: GraphicViewState::new(),
+            service: ChartProcessingService::new(),
+            state: ChartViewState::new(),
             app_state,
         };
         if let Some(file) = initial_signal_file {
@@ -61,18 +61,18 @@ impl GraphicViewComponent {
     pub fn handle_key_events(&mut self, key: KeyEvent) {
         match key.code {
             KeyCode::Left => {
-                self.state.plot_move(true, DEFAULT_PLOT_X_MOVE);
+                self.state.plot_move(true, DEFAULT_CHART_X_MOVE);
             }
             KeyCode::Right => {
-                self.state.plot_move(false, DEFAULT_PLOT_X_MOVE);
+                self.state.plot_move(false, DEFAULT_CHART_X_MOVE);
             }
             KeyCode::Up => {
-                if let Err(err) = self.state.plot_scale(true, DEFAULT_PLOT_ZOOM_MULTIPLIER) {
+                if let Err(err) = self.state.plot_scale(true, DEFAULT_CHART_ZOOM_MULTIPLIER) {
                     self.app_state.borrow_mut().set_error(Some(err));
                 }
             }
             KeyCode::Down => {
-                if let Err(err) = self.state.plot_scale(false, DEFAULT_PLOT_ZOOM_MULTIPLIER) {
+                if let Err(err) = self.state.plot_scale(false, DEFAULT_CHART_ZOOM_MULTIPLIER) {
                     self.app_state.borrow_mut().set_error(Some(err));
                 }
             }
@@ -87,9 +87,9 @@ impl GraphicViewComponent {
             if args.is_empty() || args[0] == DEFAULT_COMMAND_PREFIX {
                 return Err(CommandError::EmptyCommand.into());
             }
-            if let Ok(command) = GraphicViewCommands::from_str(args[0]) {
+            if let Ok(command) = ChartViewCommands::from_str(args[0]) {
                 match command {
-                    GraphicViewCommands::OpenFile => {
+                    ChartViewCommands::OpenFile => {
                         if let Some(path_arg) = args.get(1) {
                             let file_path = Path::new(path_arg);
                             if !file_path.exists() {
@@ -103,7 +103,7 @@ impl GraphicViewComponent {
                             return Err(CommandError::NotEnoughArguments.into());
                         }
                     }
-                    GraphicViewCommands::ZoomIn => {
+                    ChartViewCommands::ZoomIn => {
                         if let Some(multiplier_arg) = args.get(1) {
                             self.state.plot_scale(
                                 false,
@@ -115,7 +115,7 @@ impl GraphicViewComponent {
                             return Err(CommandError::NotEnoughArguments.into());
                         }
                     }
-                    GraphicViewCommands::ZoomOut => {
+                    ChartViewCommands::ZoomOut => {
                         if let Some(multiplier_arg) = args.get(1) {
                             self.state.plot_scale(
                                 true,
@@ -127,7 +127,7 @@ impl GraphicViewComponent {
                             return Err(CommandError::NotEnoughArguments.into());
                         }
                     }
-                    GraphicViewCommands::MoveLeft => {
+                    ChartViewCommands::MoveLeft => {
                         if let Some(points_arg) = args.get(1) {
                             self.state.plot_move(
                                 true,
@@ -139,7 +139,7 @@ impl GraphicViewComponent {
                             return Err(CommandError::NotEnoughArguments.into());
                         }
                     }
-                    GraphicViewCommands::MoveRight => {
+                    ChartViewCommands::MoveRight => {
                         if let Some(points_arg) = args.get(1) {
                             self.state.plot_move(
                                 false,
@@ -151,10 +151,10 @@ impl GraphicViewComponent {
                             return Err(CommandError::NotEnoughArguments.into());
                         }
                     }
-                    GraphicViewCommands::CloseWorkingView => {
+                    ChartViewCommands::CloseWorkingView => {
                         self.state.delete_current_plot();
                     }
-                    GraphicViewCommands::SwitchWorkingView => {
+                    ChartViewCommands::SwitchWorkingView => {
                         if let Some(points_arg) = args.get(1) {
                             self.state
                                 .change_current_plot(points_arg.parse::<u32>().map_err(|_| {
@@ -164,19 +164,19 @@ impl GraphicViewComponent {
                             return Err(CommandError::NotEnoughArguments.into());
                         }
                     }
-                    GraphicViewCommands::FastFourierTransform => {
+                    ChartViewCommands::FastFourierTransform => {
                         let current_plot = self.state.current_dataset();
-                        let plot = GraphicViewPlot::new(
+                        let plot = ChartModel::new(
                             self.service.fft_forward(&current_plot),
-                            current_plot.plot_type,
+                            current_plot.chart_display_type,
                             current_plot.sample_rate,
                         );
                         self.state.add_plot(plot);
                     }
-                    GraphicViewCommands::ShortTimeFourierTransform => {
+                    ChartViewCommands::ShortTimeFourierTransform => {
                         if let (Some(window_size), Some(hop_size)) = (args.get(1), args.get(2)) {
                             let current_plot = self.state.current_dataset();
-                            let plot = GraphicViewPlot::new(
+                            let plot = ChartModel::new(
                                 self.service.stft_forward(
                                     &current_plot,
                                     window_size.parse::<usize>().map_err(|_| {
@@ -186,7 +186,7 @@ impl GraphicViewComponent {
                                         CommandError::InvalidArguments(String::from(*hop_size))
                                     })?,
                                 ),
-                                current_plot.plot_type,
+                                current_plot.chart_display_type,
                                 current_plot.sample_rate,
                             );
                             self.state.add_plot(plot);
@@ -194,10 +194,10 @@ impl GraphicViewComponent {
                             return Err(CommandError::NotEnoughArguments.into());
                         }
                     }
-                    GraphicViewCommands::FftFilterLowPass => {
+                    ChartViewCommands::FftFilterLowPass => {
                         if let Some(points_arg) = args.get(1) {
                             let current_plot = self.state.current_dataset();
-                            let plot = GraphicViewPlot::new(
+                            let plot = ChartModel::new(
                                 self.service.apply_fft_filter(
                                     &current_plot,
                                     FftFilterType::LowPass(points_arg.parse::<f64>().map_err(
@@ -208,7 +208,7 @@ impl GraphicViewComponent {
                                         },
                                     )?),
                                 ),
-                                current_plot.plot_type,
+                                current_plot.chart_display_type,
                                 current_plot.sample_rate,
                             );
                             self.state.add_plot(plot);
@@ -216,10 +216,10 @@ impl GraphicViewComponent {
                             return Err(CommandError::NotEnoughArguments.into());
                         }
                     }
-                    GraphicViewCommands::FftFilterHighPass => {
+                    ChartViewCommands::FftFilterHighPass => {
                         if let Some(points_arg) = args.get(1) {
                             let current_plot = self.state.current_dataset();
-                            let plot = GraphicViewPlot::new(
+                            let plot = ChartModel::new(
                                 self.service.apply_fft_filter(
                                     &current_plot,
                                     FftFilterType::HighPass(points_arg.parse::<f64>().map_err(
@@ -230,7 +230,7 @@ impl GraphicViewComponent {
                                         },
                                     )?),
                                 ),
-                                current_plot.plot_type,
+                                current_plot.chart_display_type,
                                 current_plot.sample_rate,
                             );
                             self.state.add_plot(plot);
@@ -238,10 +238,10 @@ impl GraphicViewComponent {
                             return Err(CommandError::NotEnoughArguments.into());
                         }
                     }
-                    GraphicViewCommands::FftFilterBandPass => {
+                    ChartViewCommands::FftFilterBandPass => {
                         if let (Some(low_band), Some(high_band)) = (args.get(1), args.get(2)) {
                             let current_plot = self.state.current_dataset();
-                            let plot = GraphicViewPlot::new(
+                            let plot = ChartModel::new(
                                 self.service.apply_fft_filter(
                                     &current_plot,
                                     FftFilterType::BandPass(
@@ -253,7 +253,7 @@ impl GraphicViewComponent {
                                         })?,
                                     ),
                                 ),
-                                current_plot.plot_type,
+                                current_plot.chart_display_type,
                                 current_plot.sample_rate,
                             );
                             self.state.add_plot(plot);
@@ -261,10 +261,10 @@ impl GraphicViewComponent {
                             return Err(CommandError::NotEnoughArguments.into());
                         }
                     }
-                    GraphicViewCommands::FftFilterBandStop => {
+                    ChartViewCommands::FftFilterBandStop => {
                         if let (Some(low_band), Some(high_band)) = (args.get(1), args.get(2)) {
                             let current_plot = self.state.current_dataset();
-                            let plot = GraphicViewPlot::new(
+                            let plot = ChartModel::new(
                                 self.service.apply_fft_filter(
                                     &current_plot,
                                     FftFilterType::BandStop(
@@ -276,7 +276,7 @@ impl GraphicViewComponent {
                                         })?,
                                     ),
                                 ),
-                                current_plot.plot_type,
+                                current_plot.chart_display_type,
                                 current_plot.sample_rate,
                             );
                             self.state.add_plot(plot);
@@ -284,11 +284,11 @@ impl GraphicViewComponent {
                             return Err(CommandError::NotEnoughArguments.into());
                         }
                     }
-                    GraphicViewCommands::HaarWaveletTransform => {
+                    ChartViewCommands::HaarWaveletTransform => {
                         let current_plot = self.state.current_dataset();
-                        let plot = GraphicViewPlot::new(
+                        let plot = ChartModel::new(
                             self.service.haar_wavelet_transform(&current_plot),
-                            current_plot.plot_type,
+                            current_plot.chart_display_type,
                             current_plot.sample_rate,
                         );
                         self.state.add_plot(plot);
@@ -307,7 +307,7 @@ impl GraphicViewComponent {
             Dataset::default()
                 .marker(symbols::Marker::HalfBlock)
                 .style(Style::default().fg(Color::Cyan))
-                .graph_type(current_dataset.plot_type)
+                .graph_type(current_dataset.chart_display_type)
                 .data(&pure_coordinates),
         ];
 

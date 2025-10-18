@@ -11,9 +11,5 @@ pub const COMMAND_LIST: [(&str, &str, &str); 11] = [
     ("ml", "Number of steps (Int)", "Move chart left"),
     ("mr", "Number of steps (Int)", "Move chart right"),
     ("cwv", "-", "Close current chart view"),
-    (
-        "swv",
-        "View index (Int)",
-        "Move to the another graphic view",
-    ),
+    ("swv", "View index (Int)", "Move to the another chart view"),
 ];

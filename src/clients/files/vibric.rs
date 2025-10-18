@@ -8,8 +8,8 @@ use std::{
 use crate::{
     clients::traits::file_read_only::FileReadOnly,
     models::{
+        chart_view::{chart::ChartModel, point::Point},
         files::{signal_file::SignalFile, signal_header::SignalHeader},
-        graphic_view::{plot::GraphicViewPlot, point::Point},
     },
     shared::errors::files::FileError,
 };
@@ -86,8 +86,8 @@ impl VibricReadingClient {
 }
 
 impl FileReadOnly for VibricReadingClient {
-    fn parse_signal_file(&self, path: &str, channel: usize) -> Result<GraphicViewPlot> {
+    fn parse_signal_file(&self, path: &str, channel: usize) -> Result<ChartModel> {
         let (points, sample_rate) = self.parse_bin_file(path, channel)?;
-        Ok(GraphicViewPlot::new(points, GraphType::Line, sample_rate))
+        Ok(ChartModel::new(points, GraphType::Line, sample_rate))
     }
 }

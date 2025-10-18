@@ -1,40 +1,40 @@
 use crate::{
-    models::graphic_view::{canvas_style::GraphicViewStyle, plot::GraphicViewPlot},
+    models::chart_view::{canvas_style::ChartViewStyle, chart::ChartModel},
     shared::{
-        constants::graphic_view::{ZOOM_IN_COEFFICIENT, ZOOM_OUT_COEFFICIENT},
-        errors::graphic_view::GraphicViewError,
+        constants::chart_view::{ZOOM_IN_COEFFICIENT, ZOOM_OUT_COEFFICIENT},
+        errors::chart_view::ChartViewError,
     },
 };
 use anyhow::Result;
 
-pub struct GraphicViewState {
-    plots: Vec<GraphicViewPlot>,
+pub struct ChartViewState {
+    charts: Vec<ChartModel>,
     current_plot_id: usize,
-    canvas_style: GraphicViewStyle,
+    canvas_style: ChartViewStyle,
 }
 
-impl GraphicViewState {
+impl ChartViewState {
     pub fn new() -> Self {
         Self {
-            plots: Vec::new(),
+            charts: Vec::new(),
             current_plot_id: 0,
-            canvas_style: GraphicViewStyle::new(),
+            canvas_style: ChartViewStyle::new(),
         }
     }
 
-    pub fn current_dataset(&self) -> GraphicViewPlot {
-        self.plots
+    pub fn current_dataset(&self) -> ChartModel {
+        self.charts
             .get(self.current_plot_id)
             .cloned()
             .unwrap_or_default()
     }
 
-    pub fn canvas_style(&self) -> &GraphicViewStyle {
+    pub fn canvas_style(&self) -> &ChartViewStyle {
         &self.canvas_style
     }
 
     pub fn x_min(&self) -> f64 {
-        self.plots
+        self.charts
             .get(self.current_plot_id)
             .cloned()
             .unwrap_or_default()
@@ -42,7 +42,7 @@ impl GraphicViewState {
     }
 
     pub fn x_max(&self) -> f64 {
-        self.plots
+        self.charts
             .get(self.current_plot_id)
             .cloned()
             .unwrap_or_default()
@@ -50,7 +50,7 @@ impl GraphicViewState {
     }
 
     pub fn y_min(&self) -> f64 {
-        self.plots
+        self.charts
             .get(self.current_plot_id)
             .cloned()
             .unwrap_or_default()
@@ -58,7 +58,7 @@ impl GraphicViewState {
     }
 
     pub fn y_max(&self) -> f64 {
-        self.plots
+        self.charts
             .get(self.current_plot_id)
             .cloned()
             .unwrap_or_default()
@@ -67,9 +67,9 @@ impl GraphicViewState {
 
     pub fn plot_scale(&mut self, zoom_in: bool, zoom_multiplier: f64) -> Result<()> {
         let plot = self
-            .plots
+            .charts
             .get_mut(self.current_plot_id)
-            .ok_or(GraphicViewError::NoCurrentPlot)?;
+            .ok_or(ChartViewError::NoCurrentPlot)?;
         let x_center = (plot.x_min + plot.x_max) / 2.0;
         let x_half = (plot.x_max - plot.x_min) / 2.0;
         let x_half = if zoom_in {
@@ -102,30 +102,38 @@ impl GraphicViewState {
     }
 
     pub fn plot_move(&mut self, left: bool, points: f64) {
-        if let Some(plot) = self.plots.get_mut(self.current_plot_id) {
+        if let Some(plot) = self.charts.get_mut(self.current_plot_id) {
             if left {
-                plot.x_min -= points;
-                plot.x_max -= points;
+                plot.x_min -=
+                    (plot.x_max - plot.x_min) / (self.canvas_style.canvas_steps()) as f64 / 10.0
+                        * points;
+                plot.x_max -=
+                    (plot.x_max - plot.x_min) / (self.canvas_style.canvas_steps()) as f64 / 10.0
+                        * points;
             } else {
-                plot.x_min += points;
-                plot.x_max += points;
+                plot.x_min +=
+                    (plot.x_max - plot.x_min) / (self.canvas_style.canvas_steps()) as f64 / 10.0
+                        * points;
+                plot.x_max +=
+                    (plot.x_max - plot.x_min) / (self.canvas_style.canvas_steps()) as f64 / 10.0
+                        * points;
             }
         }
     }
 
-    pub fn add_plot(&mut self, data: GraphicViewPlot) {
-        self.plots.push(data);
-        self.current_plot_id = self.plots.len() - 1;
+    pub fn add_plot(&mut self, data: ChartModel) {
+        self.charts.push(data);
+        self.current_plot_id = self.charts.len() - 1;
     }
 
     pub fn delete_current_plot(&mut self) {
-        self.plots.remove(self.current_plot_id);
+        self.charts.remove(self.current_plot_id);
         if self.current_plot_id > 0 {
             self.current_plot_id -= 1;
         }
     }
 
     pub fn change_current_plot(&mut self, id: u32) {
-        self.current_plot_id = (id % self.plots.len() as u32) as usize;
+        self.current_plot_id = (id % self.charts.len() as u32) as usize;
     }
 }

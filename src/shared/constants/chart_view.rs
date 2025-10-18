@@ -1,0 +1,5 @@
+pub const DEFAULT_CHART_X_MOVE: f64 = 1.0;
+pub const DEFAULT_CHART_ZOOM_MULTIPLIER: f64 = 1.0;
+
+pub const ZOOM_IN_COEFFICIENT: f64 = 1.2;
+pub const ZOOM_OUT_COEFFICIENT: f64 = 0.8;

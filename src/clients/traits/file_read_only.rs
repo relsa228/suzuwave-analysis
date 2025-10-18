@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use crate::models::graphic_view::plot::GraphicViewPlot;
+use crate::models::chart_view::chart::ChartModel;
 
 pub trait FileReadOnly {
     /// Parse data file
@@ -9,5 +9,5 @@ pub trait FileReadOnly {
     ///
     /// * `path`: The path to the file to be parsed.
     /// * `channel`: The channel to be parsed.
-    fn parse_signal_file(&self, path: &str, channel: usize) -> Result<GraphicViewPlot>;
+    fn parse_signal_file(&self, path: &str, channel: usize) -> Result<ChartModel>;
 }

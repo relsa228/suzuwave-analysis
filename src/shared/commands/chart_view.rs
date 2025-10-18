@@ -1,7 +1,7 @@
 use strum_macros::{AsRefStr, EnumString};
 
 #[derive(Debug, EnumString, AsRefStr, PartialEq, Eq)]
-pub enum GraphicViewCommands {
+pub enum ChartViewCommands {
     #[strum(serialize = ":of")]
     OpenFile,
 

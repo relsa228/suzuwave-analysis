@@ -1,6 +1,4 @@
 // TODO:
-// add stft
-//
 // basic impl for chart explorer
 //
 // add docs && code refactoring

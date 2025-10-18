@@ -9,8 +9,8 @@ use std::{cell::RefCell, path::PathBuf, rc::Rc, str::FromStr};
 
 use crate::{
     components::{
-        about::AboutComponent, command_console::CommandConsoleComponent,
-        command_table::CommandTableComponent, graphic_view::GraphicViewComponent,
+        about::AboutComponent, chart_view::ChartViewComponent,
+        command_console::CommandConsoleComponent, command_table::CommandTableComponent,
     },
     shared::{
         commands::general::GeneralCommands,
@@ -23,7 +23,7 @@ use crate::{
 pub struct App {
     application_state: Rc<RefCell<ApplicationState>>,
     command_console: CommandConsoleComponent,
-    graphic_widget: GraphicViewComponent,
+    chart_view_widget: ChartViewComponent,
     version_component: AboutComponent,
     help_component: CommandTableComponent,
 }
@@ -34,7 +34,7 @@ impl App {
         Self {
             application_state: application_state.clone(),
             command_console: CommandConsoleComponent::new(application_state.clone()),
-            graphic_widget: GraphicViewComponent::new(
+            chart_view_widget: ChartViewComponent::new(
                 initial_signal_file_path,
                 application_state.clone(),
             ),
@@ -68,12 +68,12 @@ impl App {
                             self.application_state.borrow().file_explorer_size(),
                         ),
                         Constraint::Percentage(
-                            self.application_state.borrow().graphic_workspace_size(),
+                            self.application_state.borrow().chart_workspace_size(),
                         ),
                     ])
                     .split(main_chunks[0]);
 
-                let graphic_workspace = Layout::default()
+                let chart_workspace = Layout::default()
                     .direction(Direction::Vertical)
                     .constraints([Constraint::Min(5), Constraint::Max(3)])
                     .split(workspace_chunks[1]);
@@ -86,8 +86,8 @@ impl App {
                     workspace_chunks[0],
                 );
 
-                self.graphic_widget.render(f, graphic_workspace[0]);
-                self.command_console.render(f, graphic_workspace[1]);
+                self.chart_view_widget.render(f, chart_workspace[0]);
+                self.command_console.render(f, chart_workspace[1]);
                 self.version_component.render(f, main_chunks[1]);
                 self.help_component.render(f, main_chunks[2]);
             })?;
@@ -103,7 +103,7 @@ impl App {
                 let mode = self.application_state.borrow().mode();
                 if mode == ApplicationMode::Input || mode == ApplicationMode::Error {
                     self.command_console.handle_key_events(key);
-                    self.graphic_widget
+                    self.chart_view_widget
                         .update_from_state(self.application_state.clone())
                         .is_err_and(|err| self.application_state.borrow_mut().set_error(Some(err)));
                     self.update_from_state()
@@ -116,7 +116,7 @@ impl App {
                     }
                     state.set_command(None);
                 } else {
-                    self.graphic_widget.handle_key_events(key);
+                    self.chart_view_widget.handle_key_events(key);
                     self.handle_key_events(key);
                 }
             }

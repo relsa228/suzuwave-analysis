@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 #[derive(Debug, Error)]
-pub enum GraphicViewError {
+pub enum ChartViewError {
     #[error("No current plot found")]
     NoCurrentPlot,
 }

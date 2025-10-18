@@ -1,2 +1,2 @@
 pub mod general;
-pub mod graphic_view;
+pub mod chart_view;

@@ -1,4 +1,4 @@
-use crate::models::graphic_view::{plot::GraphicViewPlot, point::Point};
+use crate::models::chart_view::{chart::ChartModel, point::Point};
 use kofft::{Complex32, stft::stft, wavelet::haar_forward_inplace_stack, window::hann};
 use rustfft::{FftPlanner, num_complex::Complex};
 
@@ -10,18 +10,18 @@ pub enum FftFilterType {
     BandStop(f64, f64),
 }
 
-pub struct GraphicProcessService {
+pub struct ChartProcessingService {
     planner: FftPlanner<f64>,
 }
 
-impl GraphicProcessService {
+impl ChartProcessingService {
     pub fn new() -> Self {
         Self {
             planner: FftPlanner::new(),
         }
     }
 
-    pub fn fft_forward(&mut self, plot: &GraphicViewPlot) -> Vec<Point> {
+    pub fn fft_forward(&mut self, plot: &ChartModel) -> Vec<Point> {
         let mut buffer: Vec<Complex<f64>> =
             plot.data.iter().map(|p| Complex::new(p.y(), 0.0)).collect();
 
@@ -55,7 +55,7 @@ impl GraphicProcessService {
 
     pub fn stft_forward(
         &self,
-        plot: &GraphicViewPlot,
+        plot: &ChartModel,
         window_size: usize,
         hop_size: usize,
     ) -> Vec<Point> {
@@ -85,7 +85,7 @@ impl GraphicProcessService {
         res
     }
 
-    pub fn apply_fft_filter(&self, plot: &GraphicViewPlot, filter: FftFilterType) -> Vec<Point> {
+    pub fn apply_fft_filter(&self, plot: &ChartModel, filter: FftFilterType) -> Vec<Point> {
         plot.data
             .iter()
             .filter_map(|p| {
@@ -103,7 +103,7 @@ impl GraphicProcessService {
             .collect()
     }
 
-    pub fn haar_wavelet_transform(&self, plot: &GraphicViewPlot) -> Vec<Point> {
+    pub fn haar_wavelet_transform(&self, plot: &ChartModel) -> Vec<Point> {
         let y: Vec<f32> = plot.data.iter().map(|point| point.y() as f32).collect();
 
         let mut freq_data: [f32; u32::MAX as usize] = [0.0; u32::MAX as usize];

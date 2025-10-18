@@ -5,13 +5,13 @@ use ratatui::{
 
 use crate::shared::constants::general::DEFAULT_COLOR;
 
-pub struct GraphicViewStyle {
+pub struct ChartViewStyle {
     canvas_color: Color,
     canvas_steps: u32,
     map: Map,
 }
 
-impl GraphicViewStyle {
+impl ChartViewStyle {
     pub fn new() -> Self {
         Self {
             canvas_color: DEFAULT_COLOR,

@@ -1,1 +1,1 @@
-pub mod graphic_process;
+pub mod chart_processor;
