@@ -94,29 +94,38 @@ impl App {
         match event::read()? {
             Event::Key(key) if key.kind == KeyEventKind::Press => {
                 let mode = self.application_state.borrow().mode();
-                if mode == ApplicationMode::Input || mode == ApplicationMode::Error {
-                    self.command_console.handle_key_events(key);
-                    self.chart_view_widget
-                        .update_from_state()
-                        .is_err_and(|err| self.application_state.borrow_mut().set_error(Some(err)));
-                    self.chart_explorer_widget
-                        .update_from_state()
-                        .is_err_and(|err| self.application_state.borrow_mut().set_error(Some(err)));
-                    self.update_from_state()
-                        .is_err_and(|err| self.application_state.borrow_mut().set_error(Some(err)));
-                    let mut state = self.application_state.borrow_mut();
-                    if state.error().is_none()
-                        && let Some(command) = state.command()
-                    {
-                        state.set_error(Some(CommandError::CommandSyntax(command).into()));
+                match mode {
+                    ApplicationMode::Explorer => {
+                        self.chart_explorer_widget.handle_key(key);
+                        self.handle_key_events(key);
                     }
-                    state.set_command(None);
-                } else if mode == ApplicationMode::Explorer {
-                    self.chart_explorer_widget.handle_key(key);
-                    self.handle_key_events(key);
-                } else {
-                    self.chart_view_widget.handle_key_events(key);
-                    self.handle_key_events(key);
+                    ApplicationMode::Input | ApplicationMode::Error => {
+                        self.command_console.handle_key_events(key);
+                        self.chart_view_widget
+                            .update_from_state()
+                            .is_err_and(|err| {
+                                self.application_state.borrow_mut().set_error(Some(err))
+                            });
+                        self.chart_explorer_widget
+                            .update_from_state()
+                            .is_err_and(|err| {
+                                self.application_state.borrow_mut().set_error(Some(err))
+                            });
+                        self.update_from_state().is_err_and(|err| {
+                            self.application_state.borrow_mut().set_error(Some(err))
+                        });
+                        let mut state = self.application_state.borrow_mut();
+                        if state.error().is_none()
+                            && let Some(command) = state.command()
+                        {
+                            state.set_error(Some(CommandError::CommandSyntax(command).into()));
+                        }
+                        state.set_command(None);
+                    }
+                    _ => {
+                        self.chart_view_widget.handle_key_events(key);
+                        self.handle_key_events(key);
+                    }
                 }
             }
             Event::Mouse(_) => {}
@@ -128,29 +137,29 @@ impl App {
 
     fn update_from_state(&mut self) -> anyhow::Result<()> {
         let mut app_state = self.application_state.borrow_mut();
-        let cmd = app_state.command().clone();
-        if let Some(cmd) = cmd {
-            let args = cmd.split_whitespace().collect::<Vec<&str>>();
-            if args.is_empty() || args[0] == DEFAULT_COMMAND_PREFIX {
-                return Err(CommandError::EmptyCommand.into());
-            }
-            if let Ok(command) = GeneralCommands::from_str(args[0]) {
-                match command {
-                    GeneralCommands::About => {
-                        app_state.show_version();
-                    }
-                    GeneralCommands::Help => {
-                        app_state.show_help();
-                    }
-                    GeneralCommands::OpenCloseFileExplorer => {
-                        app_state.change_file_explorer_visibility()
-                    }
-                    GeneralCommands::OpenSettings => unimplemented!(),
-                    GeneralCommands::Quit => app_state.quit(),
-                }
-                app_state.set_command(None);
-            }
+        let Some(cmd) = app_state.command().clone() else {
+            return Ok(());
+        };
+        let args = cmd.split_whitespace().collect::<Vec<&str>>();
+        if args.is_empty() || args[0] == DEFAULT_COMMAND_PREFIX {
+            return Err(CommandError::EmptyCommand.into());
         }
+        let Ok(command) = GeneralCommands::from_str(args[0]) else {
+            return Ok(());
+        };
+        match command {
+            GeneralCommands::About => {
+                app_state.show_version();
+            }
+            GeneralCommands::Help => {
+                app_state.show_help();
+            }
+            GeneralCommands::OpenCloseChartsExplorer => app_state.change_file_explorer_visibility(),
+            GeneralCommands::OpenSettings => unimplemented!(),
+            GeneralCommands::Quit => app_state.quit(),
+        }
+        app_state.set_command(None);
+
         Ok(())
     }
 

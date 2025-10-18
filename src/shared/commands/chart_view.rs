@@ -15,6 +15,8 @@ pub enum ChartViewCommands {
     FastFourierTransform,
     #[strum(serialize = ":sft")]
     ShortTimeFourierTransform,
+    #[strum(serialize = ":hwt")]
+    HaarWaveletTransform,
     #[strum(serialize = ":flp")]
     FftFilterLowPass,
     #[strum(serialize = ":fhp")]
@@ -23,6 +25,4 @@ pub enum ChartViewCommands {
     FftFilterBandPass,
     #[strum(serialize = ":fbs")]
     FftFilterBandStop,
-    #[strum(serialize = ":hwt")]
-    HaarWaveletTransform,
 }

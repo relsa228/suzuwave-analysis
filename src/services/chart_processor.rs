@@ -1,7 +1,11 @@
+use anyhow::{Result, anyhow};
 use kofft::{Complex32, stft::stft, wavelet::haar_forward_inplace_stack, window::hann};
 use rustfft::{FftPlanner, num_complex::Complex};
 
-use crate::models::chart_view::chart::{chart_model::ChartModel, point::Point};
+use crate::{
+    models::chart_view::chart::{chart_model::ChartModel, point::Point},
+    shared::errors::chart_processing::ChartProcessingError,
+};
 
 #[derive(Debug, Clone, Copy)]
 pub enum FftFilterType {
@@ -22,15 +26,15 @@ impl ChartProcessingService {
         }
     }
 
-    pub fn fft_forward(&mut self, plot: &ChartModel) -> Vec<Point> {
+    pub fn fft_forward(&mut self, chart: &ChartModel) -> Vec<Point> {
         let mut buffer: Vec<Complex<f64>> =
-            plot.data.iter().map(|p| Complex::new(p.y(), 0.0)).collect();
+            chart.data.iter().map(|p| Complex::new(p.y, 0.0)).collect();
 
         let fft = self.planner.plan_fft_forward(buffer.len());
         fft.process(&mut buffer);
 
         let n = buffer.len();
-        let freq_res = plot.sample_rate / n as f32;
+        let freq_res = chart.sample_rate / n as f32;
 
         let mut shifted = vec![Complex::new(0.0, 0.0); n];
         let half = n / 2;
@@ -56,19 +60,16 @@ impl ChartProcessingService {
 
     pub fn stft_forward(
         &self,
-        plot: &ChartModel,
+        chart: &ChartModel,
         window_size: usize,
         hop_size: usize,
-    ) -> Vec<Point> {
-        let y: Vec<f32> = plot.data.iter().map(|point| point.y() as f32).collect();
+    ) -> Result<Vec<Point>> {
+        let y: Vec<f32> = chart.data.iter().map(|point| point.y as f32).collect();
         let window = hann(window_size);
-        let hop_size = hop_size;
         let fft = vec![Complex32::new(0.0, 0.0); window.len()];
         let mut frames = vec![fft; (y.len() + hop_size - 1) / hop_size];
-
-        if let Err(err) = stft(&y, &window, hop_size, &mut frames[..]) {
-            eprintln!("STFT error: {:?}", err);
-            return vec![Point::new(0.0, 0.0)];
+        if let Err(_) = stft(&y, &window, hop_size, &mut frames[..]) {
+            return Err(anyhow!(ChartProcessingError::StftError));
         }
 
         let res = frames
@@ -83,18 +84,19 @@ impl ChartProcessingService {
                 Point::new(t as f64, avg)
             })
             .collect();
-        res
+        Ok(res)
     }
 
-    pub fn apply_fft_filter(&self, plot: &ChartModel, filter: FftFilterType) -> Vec<Point> {
-        plot.data
+    pub fn apply_fft_filter(&self, chart: &ChartModel, filter: FftFilterType) -> Vec<Point> {
+        chart
+            .data
             .iter()
             .filter_map(|p| {
                 if match filter {
-                    FftFilterType::LowPass(cutoff) => p.x() <= cutoff,
-                    FftFilterType::HighPass(cutoff) => p.x() >= cutoff,
-                    FftFilterType::BandPass(low, high) => p.x() >= low && p.x() <= high,
-                    FftFilterType::BandStop(low, high) => p.x() <= low || p.x() >= high,
+                    FftFilterType::LowPass(cutoff) => p.x <= cutoff,
+                    FftFilterType::HighPass(cutoff) => p.x >= cutoff,
+                    FftFilterType::BandPass(low, high) => p.x >= low && p.x <= high,
+                    FftFilterType::BandStop(low, high) => p.x <= low || p.x >= high,
                 } {
                     Some(p.clone())
                 } else {
@@ -104,8 +106,8 @@ impl ChartProcessingService {
             .collect()
     }
 
-    pub fn haar_wavelet_transform(&self, plot: &ChartModel) -> Vec<Point> {
-        let y: Vec<f32> = plot.data.iter().map(|point| point.y() as f32).collect();
+    pub fn haar_wavelet_transform(&self, chart: &ChartModel) -> Vec<Point> {
+        let y: Vec<f32> = chart.data.iter().map(|point| point.y as f32).collect();
 
         let mut freq_data: [f32; u32::MAX as usize] = [0.0; u32::MAX as usize];
         let len_to_copy = y.len().min(u32::MAX as usize);

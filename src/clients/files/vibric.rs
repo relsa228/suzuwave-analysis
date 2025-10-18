@@ -105,7 +105,7 @@ impl FileReadOnly for VibricReadingClient {
             parsed_data.data,
             GraphType::Line,
             parsed_data.sample_rate,
-            &parsed_data.plot_title,
+            &parsed_data.chart_title,
             None,
         ))
     }

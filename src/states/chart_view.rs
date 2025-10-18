@@ -18,50 +18,48 @@ impl ChartViewState {
         }
     }
 
-    pub fn current_chart(&self) -> Option<Rc<RefCell<ChartModel>>> {
-        self.current_chart.clone()
-    }
-
     pub fn canvas_style(&self) -> &ChartViewStyle {
         &self.canvas_style
     }
 
     pub fn x_min(&self) -> f64 {
         if let Some(chart) = &self.current_chart {
-            chart.borrow().x_min
-        } else {
-            0.0
+            return chart.borrow().x_min;
         }
+        0.0
     }
 
     pub fn x_max(&self) -> f64 {
         if let Some(chart) = &self.current_chart {
-            chart.borrow().x_max
-        } else {
-            0.0
+            return chart.borrow().x_max;
         }
+        0.0
     }
 
     pub fn y_min(&self) -> f64 {
         if let Some(chart) = &self.current_chart {
-            chart.borrow().y_min
-        } else {
-            0.0
+            return chart.borrow().y_min;
         }
+        0.0
     }
 
     pub fn y_max(&self) -> f64 {
         if let Some(chart) = &self.current_chart {
-            chart.borrow().y_max
-        } else {
-            0.0
+            return chart.borrow().y_max;
         }
+        0.0
+    }
+
+    pub fn current_chart(&self) -> Option<Rc<RefCell<ChartModel>>> {
+        self.current_chart.clone()
+    }
+
+    pub fn set_current_chart(&mut self, chart: Option<Rc<RefCell<ChartModel>>>) {
+        self.current_chart = chart;
     }
 
     pub fn chart_scale(&mut self, zoom_in: bool, zoom_multiplier: f64) {
-        let current_chart = if let Some(chart) = &self.current_chart {
-            chart
-        } else {
+        let Some(current_chart) = &self.current_chart else {
             return;
         };
 
@@ -79,14 +77,12 @@ impl ChartViewState {
         let mut y_max = f64::NEG_INFINITY;
 
         for point in &current_chart.borrow().data {
-            if point.x() >= current_chart.borrow().x_min
-                && point.x() <= current_chart.borrow().x_max
-            {
-                if point.y() < y_min {
-                    y_min = point.y();
+            if point.x >= current_chart.borrow().x_min && point.x <= current_chart.borrow().x_max {
+                if point.y < y_min {
+                    y_min = point.y;
                 }
-                if point.y() > y_max {
-                    y_max = point.y();
+                if point.y > y_max {
+                    y_max = point.y;
                 }
             }
         }
@@ -98,27 +94,21 @@ impl ChartViewState {
     }
 
     pub fn chart_move(&mut self, left: bool, points: f64) {
-        let current_chart = if let Some(chart) = &self.current_chart {
-            chart
-        } else {
+        let Some(current_chart) = &self.current_chart else {
             return;
         };
 
         let x_delta = current_chart.borrow().x_max - current_chart.borrow().x_min;
         if left {
             current_chart.borrow_mut().x_min -=
-                x_delta / (self.canvas_style.canvas_steps()) as f64 / 10.0 * points;
+                x_delta / (self.canvas_style.canvas_steps) as f64 / 10.0 * points;
             current_chart.borrow_mut().x_max -=
-                x_delta / (self.canvas_style.canvas_steps()) as f64 / 10.0 * points;
+                x_delta / (self.canvas_style.canvas_steps) as f64 / 10.0 * points;
         } else {
             current_chart.borrow_mut().x_min +=
-                x_delta / (self.canvas_style.canvas_steps()) as f64 / 10.0 * points;
+                x_delta / (self.canvas_style.canvas_steps) as f64 / 10.0 * points;
             current_chart.borrow_mut().x_max +=
-                x_delta / (self.canvas_style.canvas_steps()) as f64 / 10.0 * points;
+                x_delta / (self.canvas_style.canvas_steps) as f64 / 10.0 * points;
         }
-    }
-
-    pub fn set_current_chart(&mut self, chart: Option<Rc<RefCell<ChartModel>>>) {
-        self.current_chart = chart;
     }
 }

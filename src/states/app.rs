@@ -46,6 +46,7 @@ impl ApplicationState {
         }
     }
 
+    // Getters
     pub fn is_running(&self) -> bool {
         self.is_running
     }
@@ -78,6 +79,11 @@ impl ApplicationState {
         self.command.clone()
     }
 
+    pub fn error(&self) -> Option<String> {
+        self.error.clone()
+    }
+
+    // Setters
     pub fn set_command(&mut self, command: Option<String>) {
         self.command = command;
     }
@@ -92,10 +98,7 @@ impl ApplicationState {
         true
     }
 
-    pub fn error(&self) -> Option<String> {
-        self.error.clone()
-    }
-
+    // Mode changes
     pub fn to_input_mode(&mut self) {
         self.mode = ApplicationMode::Input;
     }
@@ -111,6 +114,11 @@ impl ApplicationState {
         self.workspace_size = 100;
     }
 
+    pub fn quit(&mut self) {
+        self.is_running = false;
+    }
+
+    // Show widgets
     pub fn show_version(&mut self) {
         self.to_static_mode();
         self.workspace_size = 0;
@@ -123,10 +131,6 @@ impl ApplicationState {
         self.help_component_size = 100;
     }
 
-    pub fn quit(&mut self) {
-        self.is_running = false;
-    }
-
     pub fn change_file_explorer_visibility(&mut self) {
         if self.file_explorer_size == 0 {
             self.file_explorer_size = 15;
@@ -137,20 +141,29 @@ impl ApplicationState {
         }
     }
 
+    // Chart management
+    pub fn charts(&self) -> Vec<Rc<RefCell<ChartModel>>> {
+        self.charts.clone()
+    }
+
+    pub fn current_chart_id(&self) -> usize {
+        self.current_chart_id
+    }
+
+    pub fn get_current_chart(&self) -> Option<Rc<RefCell<ChartModel>>> {
+        self.charts.get(self.current_chart_id).cloned()
+    }
+
     pub fn add_chart(&mut self, data: ChartModel) {
         self.charts.push(Rc::new(RefCell::new(data)));
         self.current_chart_id = self.charts.len() - 1;
     }
 
-    pub fn delete_chart(&mut self) {
+    pub fn delete_current_chart(&mut self) {
         self.charts.remove(self.current_chart_id);
         if self.current_chart_id > 0 {
             self.current_chart_id -= 1;
         }
-    }
-
-    pub fn get_current_chart(&self) -> Option<Rc<RefCell<ChartModel>>> {
-        self.charts.get(self.current_chart_id).cloned()
     }
 
     pub fn change_current_chart(&mut self, id: u32) {
@@ -163,13 +176,5 @@ impl ApplicationState {
 
     pub fn move_current_chart_backward(&mut self) {
         self.current_chart_id = (self.current_chart_id + self.charts.len() - 1) % self.charts.len();
-    }
-
-    pub fn current_chart_id(&self) -> usize {
-        self.current_chart_id
-    }
-
-    pub fn charts(&self) -> Vec<Rc<RefCell<ChartModel>>> {
-        self.charts.clone()
     }
 }

@@ -24,23 +24,23 @@ impl ChartModel {
     ) -> Self {
         let x_min = data
             .iter()
-            .map(|p| p.x())
+            .map(|p| p.x)
             .min_by(|a, b| a.total_cmp(b))
             .unwrap_or(f64::MIN);
         let x_max = data
             .iter()
-            .map(|p| p.x())
+            .map(|p| p.x)
             .max_by(|a, b| a.total_cmp(b))
             .unwrap_or(f64::MAX);
         let y_min = data
             .iter()
-            .map(|p| p.y())
+            .map(|p| p.y)
             .min_by(|a, b| a.total_cmp(b))
             .unwrap_or(f64::MIN + MARGIN)
             - MARGIN;
         let y_max = data
             .iter()
-            .map(|p| p.y())
+            .map(|p| p.y)
             .max_by(|a, b| a.total_cmp(b))
             .unwrap_or(f64::MAX - MARGIN)
             + MARGIN;
@@ -59,7 +59,7 @@ impl ChartModel {
     pub fn data_to_pure_coordinates(&self) -> Vec<(f64, f64)> {
         self.data
             .iter()
-            .map(|point| (point.x(), point.y()))
+            .map(|point| (point.x, point.y))
             .collect::<Vec<(f64, f64)>>()
     }
 }

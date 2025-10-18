@@ -29,6 +29,16 @@ impl CommandConsoleState {
         }
     }
 
+    // Getters
+    pub fn style(&self) -> &CommandConsoleStyle {
+        &self.style
+    }
+
+    pub fn style_as_mut(&mut self) -> &mut CommandConsoleStyle {
+        &mut self.style
+    }
+
+    // Commands history cache
     fn to_history_cache(&mut self) {
         if !self.input.is_empty() {
             self.command_history.push(self.input.clone());
@@ -61,36 +71,9 @@ impl CommandConsoleState {
         self.cursor_position = self.input.len();
     }
 
-    pub fn cursor_move(&mut self, left: bool) {
-        if left {
-            if self.cursor_position > 1 {
-                self.cursor_position -= 1;
-            }
-        } else {
-            if self.cursor_position < self.input.len() {
-                self.cursor_position += 1;
-            }
-        }
-    }
-
+    // Input line && cursor management
     pub fn input(&self) -> &str {
         &self.input
-    }
-
-    pub fn render_input(&self) -> Line<'_> {
-        if self.is_input_error {
-            Line::from(self.input.clone())
-        } else {
-            let mut iter = self.input.chars();
-            let left: String = iter.by_ref().take(self.cursor_position).collect();
-            let right: String = iter.collect();
-
-            Line::from(vec![
-                Span::raw(left),
-                Span::styled(DEFAULT_CURSOR, Style::default().fg(Color::LightGreen)),
-                Span::raw(right),
-            ])
-        }
     }
 
     pub fn set_input(&mut self, input: String) {
@@ -124,22 +107,41 @@ impl CommandConsoleState {
 
     pub fn set_error(&mut self, error: String) {
         self.is_input_error = true;
-        self.style_as_mut().set_input_color(Color::Red);
-        self.style_as_mut().set_borders_color(Color::Red);
+        self.style_as_mut().input_color = Color::Red;
+        self.style_as_mut().border_color = Color::Red;
         self.set_input(error);
     }
 
     pub fn clear_error(&mut self) {
         self.is_input_error = false;
-        self.style_as_mut().set_input_color(Color::Green);
-        self.style_as_mut().set_borders_color(Color::Green);
+        self.style_as_mut().input_color = Color::Green;
+        self.style_as_mut().border_color = Color::Green;
     }
 
-    pub fn style(&self) -> &CommandConsoleStyle {
-        &self.style
+    pub fn cursor_move(&mut self, left: bool) {
+        if left {
+            if self.cursor_position > 1 {
+                self.cursor_position -= 1;
+            }
+        } else {
+            if self.cursor_position < self.input.len() {
+                self.cursor_position += 1;
+            }
+        }
     }
 
-    pub fn style_as_mut(&mut self) -> &mut CommandConsoleStyle {
-        &mut self.style
+    pub fn render_input(&self) -> Line<'_> {
+        if self.is_input_error {
+            return Line::from(self.input.clone());
+        }
+        let mut iter = self.input.chars();
+        let left: String = iter.by_ref().take(self.cursor_position).collect();
+        let right: String = iter.collect();
+
+        Line::from(vec![
+            Span::raw(left),
+            Span::styled(DEFAULT_CURSOR, Style::default().fg(Color::LightGreen)),
+            Span::raw(right),
+        ])
     }
 }

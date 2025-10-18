@@ -28,40 +28,40 @@ impl CommandConsoleComponent {
     pub fn handle_key_events(&mut self, key: KeyEvent) {
         let mut state = self.state.borrow_mut();
         let is_error = self.app_state.borrow().mode() == ApplicationMode::Error;
-        match (key.modifiers, key.code) {
-            (_, KeyCode::Char(':')) => {
+        match key.code {
+            KeyCode::Char(':') => {
                 state.flush_input();
                 self.app_state.borrow_mut().to_input_mode();
             }
-            (_, KeyCode::Char(c)) => {
+            KeyCode::Char(c) => {
                 if !is_error {
                     state.push_char(c);
                 }
             }
-            (_, KeyCode::Backspace) => {
+            KeyCode::Backspace => {
                 if !is_error {
                     state.remove_char();
                 }
             }
-            (_, KeyCode::Left) => {
+            KeyCode::Left => {
                 if !is_error {
                     state.cursor_move(true);
                 }
             }
-            (_, KeyCode::Right) => {
+            KeyCode::Right => {
                 if !is_error {
                     state.cursor_move(false);
                 }
             }
-            (_, KeyCode::Up) => {
+            KeyCode::Up => {
                 state.clear_error();
                 state.move_history_cursor(true);
             }
-            (_, KeyCode::Down) => {
+            KeyCode::Down => {
                 state.clear_error();
                 state.move_history_cursor(false);
             }
-            (_, KeyCode::Enter) => {
+            KeyCode::Enter => {
                 if !is_error {
                     self.app_state
                         .borrow_mut()
@@ -72,7 +72,7 @@ impl CommandConsoleComponent {
                     self.app_state.borrow_mut().to_input_mode();
                 }
             }
-            (_, KeyCode::Esc) => {
+            KeyCode::Esc => {
                 self.app_state.borrow_mut().to_static_mode();
                 drop(state);
                 self.disable_input_mode();
@@ -96,12 +96,12 @@ impl CommandConsoleComponent {
         }
         let state = self.state.borrow_mut();
         let input_widget = Paragraph::new(state.render_input())
-            .style(Style::default().fg(state.style().input_color()))
+            .style(Style::default().fg(state.style().input_color))
             .block(
                 Block::default()
-                    .borders(state.style().borders())
-                    .border_type(state.style().borders_type())
-                    .border_style(Style::default().fg(state.style().border_color())),
+                    .borders(state.style().borders)
+                    .border_type(state.style().borders_type)
+                    .border_style(Style::default().fg(state.style().border_color)),
             );
 
         f.render_widget(input_widget, rect);
@@ -110,18 +110,18 @@ impl CommandConsoleComponent {
     fn enable_input_mode(&mut self) {
         let mut state = self.state.borrow_mut();
         if self.app_state.borrow().mode() == ApplicationMode::Input {
-            state.style_as_mut().set_borders_color(Color::Green);
-            state.style_as_mut().set_input_color(Color::Green);
+            state.style_as_mut().border_color = Color::Green;
+            state.style_as_mut().input_color = Color::Green;
         } else {
-            state.style_as_mut().set_borders_color(Color::Red);
-            state.style_as_mut().set_input_color(Color::Red);
+            state.style_as_mut().border_color = Color::Red;
+            state.style_as_mut().input_color = Color::Red;
         }
     }
 
     fn disable_input_mode(&mut self) {
         let mut state = self.state.borrow_mut();
-        state.style_as_mut().set_borders_color(Color::LightGreen);
-        state.style_as_mut().set_input_color(Color::LightGreen);
+        state.style_as_mut().border_color = Color::LightGreen;
+        state.style_as_mut().input_color = Color::LightGreen;
     }
 
     fn set_error(&self) {
