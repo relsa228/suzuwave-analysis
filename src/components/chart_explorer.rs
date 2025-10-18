@@ -3,7 +3,12 @@ use crate::{
     models::files::file_types::FileType,
     shared::{
         commands::chart_explorer::ChartExplorerCommands,
-        constants::{chart_explorer::CHART_EXPLORER_WIDGET_NAME, command::DEFAULT_COMMAND_PREFIX},
+        constants::{
+            chart_explorer::{
+                CHART_EXPLORER_WIDGET_NAME, DELETE_KEY_1, DELETE_KEY_2, HIGHLIGHT_SYMBOL,
+            },
+            command::DEFAULT_COMMAND_PREFIX,
+        },
         errors::{commands::CommandError, files::FileError},
     },
     states::app::{ApplicationMode, ApplicationState},
@@ -53,7 +58,7 @@ impl ChartExplorerComponent {
         match key.code {
             KeyCode::Up => self.app_state.borrow_mut().move_current_chart_backward(),
             KeyCode::Down => self.app_state.borrow_mut().move_current_chart_forward(),
-            KeyCode::Char('d') | KeyCode::Char('D') => {
+            KeyCode::Char(DELETE_KEY_1) | KeyCode::Char(DELETE_KEY_2) => {
                 self.app_state.borrow_mut().delete_current_chart()
             }
             _ => {}
@@ -129,7 +134,7 @@ impl ChartExplorerComponent {
                         .add_modifier(Modifier::BOLD),
                 ));
                 let desc_line = Line::from(Span::styled(
-                    chart.metadata.description.clone(),
+                    chart.metadata.description(),
                     Style::default().fg(status_color),
                 ));
                 ListItem::new(vec![title_line, desc_line])
@@ -143,7 +148,7 @@ impl ChartExplorerComponent {
                     .borders(Borders::ALL)
                     .style(Style::default().fg(block_color)),
             )
-            .highlight_symbol("➤ ");
+            .highlight_symbol(HIGHLIGHT_SYMBOL);
         self.list_state.select(Some(app_state.current_chart_id()));
         f.render_stateful_widget(list, rect, &mut self.list_state);
     }

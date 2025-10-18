@@ -1,5 +1,5 @@
 use crate::{
-    models::chart_view::chart::chart_model::ChartModel,
+    models::chart_view::chart::{chart_model::ChartModel, chart_transform::ChartTransform},
     services::chart_processor::{ChartProcessingService, FftFilterType},
     shared::{
         commands::chart_view::ChartViewCommands,
@@ -113,7 +113,7 @@ impl ChartViewComponent {
                     current_chart_borrow.metadata.chart_display_type,
                     current_chart_borrow.sample_rate,
                     &current_chart_borrow.metadata.title,
-                    Some(&current_chart_borrow.metadata.description), // TODO: Change description
+                    Some(ChartTransform::Fft),
                 );
                 state_borrow.add_chart(chart);
             }
@@ -137,7 +137,7 @@ impl ChartViewComponent {
                     current_chart_borrow.metadata.chart_display_type,
                     current_chart_borrow.sample_rate,
                     &current_chart_borrow.metadata.title,
-                    Some(&current_chart_borrow.metadata.description), // TODO: Change description
+                    Some(ChartTransform::Stft),
                 );
                 state_borrow.add_chart(chart);
             }
@@ -158,7 +158,7 @@ impl ChartViewComponent {
                     current_chart_borrow.metadata.chart_display_type,
                     current_chart_borrow.sample_rate,
                     &current_chart_borrow.metadata.title,
-                    Some(&current_chart_borrow.metadata.description), // TODO: Change description
+                    Some(ChartTransform::Filtered),
                 );
                 state_borrow.add_chart(chart);
             }
@@ -179,7 +179,7 @@ impl ChartViewComponent {
                     current_chart_borrow.metadata.chart_display_type,
                     current_chart_borrow.sample_rate,
                     &current_chart_borrow.metadata.title,
-                    Some(&current_chart_borrow.metadata.description), // TODO: Change description
+                    Some(ChartTransform::Filtered),
                 );
                 state_borrow.add_chart(chart);
             }
@@ -204,7 +204,7 @@ impl ChartViewComponent {
                     current_chart_borrow.metadata.chart_display_type,
                     current_chart_borrow.sample_rate,
                     &current_chart_borrow.metadata.title,
-                    Some(&current_chart_borrow.metadata.description), // TODO: Change description
+                    Some(ChartTransform::Filtered),
                 );
                 state_borrow.add_chart(chart);
             }
@@ -229,7 +229,7 @@ impl ChartViewComponent {
                     current_chart_borrow.metadata.chart_display_type,
                     current_chart_borrow.sample_rate,
                     &current_chart_borrow.metadata.title,
-                    Some(&current_chart_borrow.metadata.description), // TODO: Change description
+                    Some(ChartTransform::Filtered),
                 );
                 state_borrow.add_chart(chart);
             }
@@ -243,7 +243,7 @@ impl ChartViewComponent {
                     current_chart_borrow.metadata.chart_display_type,
                     current_chart_borrow.sample_rate,
                     &current_chart_borrow.metadata.title,
-                    Some(&current_chart_borrow.metadata.description), // TODO: Change description
+                    Some(ChartTransform::WaveletHaar),
                 );
                 state_borrow.add_chart(chart);
             }

@@ -1,7 +1,5 @@
 // TODO:
-// basic impl for chart explorer
-//
-// add docs && code refactoring
+// chart type && add docs
 //
 // add mouse events
 

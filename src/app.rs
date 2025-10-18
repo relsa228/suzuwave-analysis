@@ -1,10 +1,3 @@
-use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
-use ratatui::{
-    DefaultTerminal,
-    layout::{Constraint, Direction, Layout},
-};
-use std::{cell::RefCell, path::PathBuf, rc::Rc, str::FromStr};
-
 use crate::{
     components::{
         about::AboutComponent, chart_explorer::ChartExplorerComponent,
@@ -12,11 +5,23 @@ use crate::{
         command_table::CommandTableComponent,
     },
     shared::{
-        commands::general::GeneralCommands, constants::command::DEFAULT_COMMAND_PREFIX,
+        commands::general::GeneralCommands,
+        constants::{
+            command::DEFAULT_COMMAND_PREFIX,
+            general::{
+                EXPLORER_KEY_1, EXPLORER_KEY_2, INPUT_KEY_1, INPUT_KEY_2, QUIT_KEY_1, QUIT_KEY_2,
+            },
+        },
         errors::commands::CommandError,
     },
     states::app::{ApplicationMode, ApplicationState},
 };
+use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
+use ratatui::{
+    DefaultTerminal,
+    layout::{Constraint, Direction, Layout},
+};
+use std::{cell::RefCell, path::PathBuf, rc::Rc, str::FromStr};
 
 pub struct App {
     application_state: Rc<RefCell<ApplicationState>>,
@@ -165,13 +170,13 @@ impl App {
 
     fn handle_key_events(&mut self, key: KeyEvent) {
         match (key.modifiers, key.code) {
-            (KeyModifiers::CONTROL, KeyCode::Char('c') | KeyCode::Char('C')) => {
+            (KeyModifiers::CONTROL, KeyCode::Char(QUIT_KEY_1) | KeyCode::Char(QUIT_KEY_2)) => {
                 self.application_state.borrow_mut().quit()
             }
-            (_, KeyCode::Char('i') | KeyCode::Char('I')) => {
+            (_, KeyCode::Char(INPUT_KEY_1) | KeyCode::Char(INPUT_KEY_2)) => {
                 self.application_state.borrow_mut().to_input_mode()
             }
-            (_, KeyCode::Char('e') | KeyCode::Char('E')) => {
+            (_, KeyCode::Char(EXPLORER_KEY_1) | KeyCode::Char(EXPLORER_KEY_2)) => {
                 self.application_state.borrow_mut().to_explorer_mode()
             }
             (_, KeyCode::Esc) => {

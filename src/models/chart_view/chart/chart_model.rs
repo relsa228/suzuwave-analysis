@@ -1,4 +1,6 @@
-use crate::models::chart_view::chart::{chart_metadata::ChartMetadata, point::Point};
+use crate::models::chart_view::chart::{
+    chart_metadata::ChartMetadata, chart_transform::ChartTransform, point::Point,
+};
 use ratatui::widgets::GraphType;
 
 const MARGIN: f64 = 0.07;
@@ -20,7 +22,7 @@ impl ChartModel {
         chart_display_type: GraphType,
         sample_rate: f32,
         title: &str,
-        description: Option<&str>,
+        transform: Option<ChartTransform>,
     ) -> Self {
         let x_min = data
             .iter()
@@ -52,7 +54,7 @@ impl ChartModel {
             y_max,
             data,
             sample_rate,
-            metadata: ChartMetadata::new(title, description, chart_display_type),
+            metadata: ChartMetadata::new(title, transform, chart_display_type),
         }
     }
 
