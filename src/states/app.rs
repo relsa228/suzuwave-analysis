@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use anyhow::Error;
 
 use crate::models::chart_view::chart::chart_model::ChartModel;
@@ -22,7 +24,7 @@ pub struct ApplicationState {
     command: Option<String>,
     error: Option<String>,
 
-    charts: Vec<ChartModel>,
+    charts: Vec<Rc<RefCell<ChartModel>>>,
     current_chart_id: usize,
 }
 
@@ -131,7 +133,7 @@ impl ApplicationState {
     }
 
     pub fn add_chart(&mut self, data: ChartModel) {
-        self.charts.push(data);
+        self.charts.push(Rc::new(RefCell::new(data)));
         self.current_chart_id = self.charts.len() - 1;
     }
 
@@ -142,7 +144,7 @@ impl ApplicationState {
         }
     }
 
-    pub fn get_current_chart(&self) -> ChartModel {
+    pub fn get_current_chart(&self) -> Rc<RefCell<ChartModel>> {
         self.charts[self.current_chart_id].clone()
     }
 

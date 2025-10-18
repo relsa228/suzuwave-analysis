@@ -113,21 +113,23 @@ impl ChartViewComponent {
                     }
                     ChartViewCommands::FastFourierTransform => {
                         let current_plot = self.state.current_chart();
+                        let current_plot_borrow = current_plot.borrow();
                         let plot = ChartModel::new(
-                            self.service.fft_forward(&current_plot),
-                            current_plot.metadata.chart_display_type,
-                            current_plot.sample_rate,
-                            &current_plot.metadata.title,
-                            Some(&current_plot.metadata.description), // TODO: Change description
+                            self.service.fft_forward(&current_plot_borrow),
+                            current_plot_borrow.metadata.chart_display_type,
+                            current_plot_borrow.sample_rate,
+                            &current_plot_borrow.metadata.title,
+                            Some(&current_plot_borrow.metadata.description), // TODO: Change description
                         );
                         state_borrow.add_chart(plot);
                     }
                     ChartViewCommands::ShortTimeFourierTransform => {
                         if let (Some(window_size), Some(hop_size)) = (args.get(1), args.get(2)) {
                             let current_plot = self.state.current_chart();
+                            let current_plot_borrow = current_plot.borrow();
                             let plot = ChartModel::new(
                                 self.service.stft_forward(
-                                    &current_plot,
+                                    &current_plot_borrow,
                                     window_size.parse::<usize>().map_err(|_| {
                                         CommandError::InvalidArguments(String::from(*window_size))
                                     })?,
@@ -135,10 +137,10 @@ impl ChartViewComponent {
                                         CommandError::InvalidArguments(String::from(*hop_size))
                                     })?,
                                 ),
-                                current_plot.metadata.chart_display_type,
-                                current_plot.sample_rate,
-                                &current_plot.metadata.title,
-                                Some(&current_plot.metadata.description), // TODO: Change description
+                                current_plot_borrow.metadata.chart_display_type,
+                                current_plot_borrow.sample_rate,
+                                &current_plot_borrow.metadata.title,
+                                Some(&current_plot_borrow.metadata.description), // TODO: Change description
                             );
                             state_borrow.add_chart(plot);
                         } else {
@@ -148,9 +150,10 @@ impl ChartViewComponent {
                     ChartViewCommands::FftFilterLowPass => {
                         if let Some(points_arg) = args.get(1) {
                             let current_plot = self.state.current_chart();
+                            let current_plot_borrow = current_plot.borrow();
                             let plot = ChartModel::new(
                                 self.service.apply_fft_filter(
-                                    &current_plot,
+                                    &current_plot_borrow,
                                     FftFilterType::LowPass(points_arg.parse::<f64>().map_err(
                                         |_| {
                                             CommandError::InvalidArguments(String::from(
@@ -159,10 +162,10 @@ impl ChartViewComponent {
                                         },
                                     )?),
                                 ),
-                                current_plot.metadata.chart_display_type,
-                                current_plot.sample_rate,
-                                &current_plot.metadata.title,
-                                Some(&current_plot.metadata.description), // TODO: Change description
+                                current_plot_borrow.metadata.chart_display_type,
+                                current_plot_borrow.sample_rate,
+                                &current_plot_borrow.metadata.title,
+                                Some(&current_plot_borrow.metadata.description), // TODO: Change description
                             );
                             state_borrow.add_chart(plot);
                         } else {
@@ -172,9 +175,10 @@ impl ChartViewComponent {
                     ChartViewCommands::FftFilterHighPass => {
                         if let Some(points_arg) = args.get(1) {
                             let current_plot = self.state.current_chart();
+                            let current_plot_borrow = current_plot.borrow();
                             let plot = ChartModel::new(
                                 self.service.apply_fft_filter(
-                                    &current_plot,
+                                    &current_plot_borrow,
                                     FftFilterType::HighPass(points_arg.parse::<f64>().map_err(
                                         |_| {
                                             CommandError::InvalidArguments(String::from(
@@ -183,10 +187,10 @@ impl ChartViewComponent {
                                         },
                                     )?),
                                 ),
-                                current_plot.metadata.chart_display_type,
-                                current_plot.sample_rate,
-                                &current_plot.metadata.title,
-                                Some(&current_plot.metadata.description), // TODO: Change description
+                                current_plot_borrow.metadata.chart_display_type,
+                                current_plot_borrow.sample_rate,
+                                &current_plot_borrow.metadata.title,
+                                Some(&current_plot_borrow.metadata.description), // TODO: Change description
                             );
                             state_borrow.add_chart(plot);
                         } else {
@@ -196,9 +200,10 @@ impl ChartViewComponent {
                     ChartViewCommands::FftFilterBandPass => {
                         if let (Some(low_band), Some(high_band)) = (args.get(1), args.get(2)) {
                             let current_plot = self.state.current_chart();
+                            let current_plot_borrow = current_plot.borrow();
                             let plot = ChartModel::new(
                                 self.service.apply_fft_filter(
-                                    &current_plot,
+                                    &current_plot_borrow,
                                     FftFilterType::BandPass(
                                         low_band.parse::<f64>().map_err(|_| {
                                             CommandError::InvalidArguments(String::from(*low_band))
@@ -208,10 +213,10 @@ impl ChartViewComponent {
                                         })?,
                                     ),
                                 ),
-                                current_plot.metadata.chart_display_type,
-                                current_plot.sample_rate,
-                                &current_plot.metadata.title,
-                                Some(&current_plot.metadata.description), // TODO: Change description
+                                current_plot_borrow.metadata.chart_display_type,
+                                current_plot_borrow.sample_rate,
+                                &current_plot_borrow.metadata.title,
+                                Some(&current_plot_borrow.metadata.description), // TODO: Change description
                             );
                             state_borrow.add_chart(plot);
                         } else {
@@ -221,9 +226,10 @@ impl ChartViewComponent {
                     ChartViewCommands::FftFilterBandStop => {
                         if let (Some(low_band), Some(high_band)) = (args.get(1), args.get(2)) {
                             let current_plot = self.state.current_chart();
+                            let current_plot_borrow = current_plot.borrow();
                             let plot = ChartModel::new(
                                 self.service.apply_fft_filter(
-                                    &current_plot,
+                                    &current_plot_borrow,
                                     FftFilterType::BandStop(
                                         low_band.parse::<f64>().map_err(|_| {
                                             CommandError::InvalidArguments(String::from(*low_band))
@@ -233,10 +239,10 @@ impl ChartViewComponent {
                                         })?,
                                     ),
                                 ),
-                                current_plot.metadata.chart_display_type,
-                                current_plot.sample_rate,
-                                &current_plot.metadata.title,
-                                Some(&current_plot.metadata.description), // TODO: Change description
+                                current_plot_borrow.metadata.chart_display_type,
+                                current_plot_borrow.sample_rate,
+                                &current_plot_borrow.metadata.title,
+                                Some(&current_plot_borrow.metadata.description), // TODO: Change description
                             );
                             state_borrow.add_chart(plot);
                         } else {
@@ -245,12 +251,13 @@ impl ChartViewComponent {
                     }
                     ChartViewCommands::HaarWaveletTransform => {
                         let current_plot = self.state.current_chart();
+                        let current_plot_borrow = current_plot.borrow();
                         let plot = ChartModel::new(
-                            self.service.haar_wavelet_transform(&current_plot),
-                            current_plot.metadata.chart_display_type,
-                            current_plot.sample_rate,
-                            &current_plot.metadata.title,
-                            Some(&current_plot.metadata.description), // TODO: Change description
+                            self.service.haar_wavelet_transform(&current_plot_borrow),
+                            current_plot_borrow.metadata.chart_display_type,
+                            current_plot_borrow.sample_rate,
+                            &current_plot_borrow.metadata.title,
+                            Some(&current_plot_borrow.metadata.description), // TODO: Change description
                         );
                         state_borrow.add_chart(plot);
                     }
@@ -264,12 +271,13 @@ impl ChartViewComponent {
     pub fn render(&mut self, f: &mut Frame, rect: Rect) {
         let current_dataset = &self.app_state.borrow().get_current_chart();
         self.state.set_current_chart(current_dataset.clone());
-        let pure_coordinates = current_dataset.data_to_pure_coordinates();
+        let current_dataset_borrow = current_dataset.borrow();
+        let pure_coordinates = current_dataset_borrow.data_to_pure_coordinates();
         let datasets = vec![
             Dataset::default()
                 .marker(symbols::Marker::HalfBlock)
                 .style(Style::default().fg(Color::Cyan))
-                .graph_type(current_dataset.metadata.chart_display_type)
+                .graph_type(current_dataset_borrow.metadata.chart_display_type)
                 .data(&pure_coordinates),
         ];
 
