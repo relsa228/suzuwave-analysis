@@ -1,5 +1,5 @@
 use crate::{
-    models::chart_view::{canvas_style::ChartViewStyle, chart::ChartModel},
+    models::chart_view::{canvas_style::ChartViewStyle, chart::chart_model::ChartModel},
     shared::{
         constants::chart_view::{ZOOM_IN_COEFFICIENT, ZOOM_OUT_COEFFICIENT},
         errors::chart_view::ChartViewError,

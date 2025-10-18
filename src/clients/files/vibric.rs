@@ -3,26 +3,26 @@ use ratatui::widgets::GraphType;
 use std::{
     fs::File,
     io::{BufReader, Read},
+    path::Path,
 };
 
 use crate::{
     clients::traits::file_read_only::FileReadOnly,
     models::{
-        chart_view::{chart::ChartModel, point::Point},
-        files::{signal_file::SignalFile, signal_header::SignalHeader},
+        chart_view::chart::{chart_model::ChartModel, point::Point},
+        files::{
+            signal_file::SignalFile, signal_header::SignalHeader,
+            vibric::parsed_file_data::ParsedFileData,
+        },
     },
-    shared::errors::files::FileError,
+    shared::{constants::vibric::VIBRIC_SIGNATURE, errors::files::FileError},
 };
 
-type ParsedFileData = (Vec<Point>, f32);
-
-const VIBRIC_SIGNATURE: &[u8] = b"TMB1";
-
-pub struct VibricReadingClient {}
+pub struct VibricReadingClient;
 
 impl VibricReadingClient {
     pub fn new() -> Self {
-        VibricReadingClient {}
+        VibricReadingClient
     }
 
     fn read_u32<R: Read>(&self, reader: &mut R) -> Result<u32> {
@@ -81,13 +81,32 @@ impl VibricReadingClient {
             }
         }
 
-        Ok((points, sample_rate))
+        let path_file = Path::new(path);
+
+        let parsed_data = ParsedFileData::new(
+            points,
+            sample_rate,
+            String::from(
+                path_file
+                    .file_stem()
+                    .unwrap_or_default()
+                    .to_str()
+                    .unwrap_or_default(),
+            ),
+        );
+        Ok(parsed_data)
     }
 }
 
 impl FileReadOnly for VibricReadingClient {
     fn parse_signal_file(&self, path: &str, channel: usize) -> Result<ChartModel> {
-        let (points, sample_rate) = self.parse_bin_file(path, channel)?;
-        Ok(ChartModel::new(points, GraphType::Line, sample_rate))
+        let parsed_data = self.parse_bin_file(path, channel)?;
+        Ok(ChartModel::new(
+            parsed_data.data,
+            GraphType::Line,
+            parsed_data.sample_rate,
+            &parsed_data.plot_title,
+            None,
+        ))
     }
 }

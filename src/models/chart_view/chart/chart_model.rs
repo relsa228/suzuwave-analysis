@@ -1,6 +1,5 @@
+use crate::models::chart_view::chart::{chart_metadata::ChartMetadata, point::Point};
 use ratatui::widgets::GraphType;
-
-use crate::models::chart_view::point::Point;
 
 const MARGIN: f64 = 0.07;
 
@@ -10,13 +9,19 @@ pub struct ChartModel {
     pub x_max: f64,
     pub y_min: f64,
     pub y_max: f64,
-    pub data: Vec<Point>,
-    pub chart_display_type: GraphType,
     pub sample_rate: f32,
+    pub data: Vec<Point>,
+    pub metadata: ChartMetadata,
 }
 
 impl ChartModel {
-    pub fn new(data: Vec<Point>, chart_display_type: GraphType, sample_rate: f32) -> Self {
+    pub fn new(
+        data: Vec<Point>,
+        chart_display_type: GraphType,
+        sample_rate: f32,
+        title: &str,
+        description: Option<&str>,
+    ) -> Self {
         let x_min = data
             .iter()
             .map(|p| p.x())
@@ -46,8 +51,8 @@ impl ChartModel {
             y_min,
             y_max,
             data,
-            chart_display_type,
             sample_rate,
+            metadata: ChartMetadata::new(title, description, chart_display_type),
         }
     }
 

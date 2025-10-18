@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use crate::models::chart_view::chart::ChartModel;
+use crate::models::chart_view::chart::chart_model::ChartModel;
 
 pub trait FileReadOnly {
     /// Parse data file

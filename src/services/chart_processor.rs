@@ -1,6 +1,7 @@
-use crate::models::chart_view::{chart::ChartModel, point::Point};
 use kofft::{Complex32, stft::stft, wavelet::haar_forward_inplace_stack, window::hann};
 use rustfft::{FftPlanner, num_complex::Complex};
+
+use crate::models::chart_view::chart::{chart_model::ChartModel, point::Point};
 
 #[derive(Debug, Clone, Copy)]
 pub enum FftFilterType {

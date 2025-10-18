@@ -1,6 +1,6 @@
 use crate::{
     clients::{files::vibric::VibricReadingClient, traits::file_read_only::FileReadOnly},
-    models::{chart_view::chart::ChartModel, files::file_types::FileType},
+    models::{chart_view::chart::chart_model::ChartModel, files::file_types::FileType},
     services::chart_processor::{ChartProcessingService, FftFilterType},
     shared::{
         commands::chart_view::ChartViewCommands,
@@ -168,8 +168,10 @@ impl ChartViewComponent {
                         let current_plot = self.state.current_dataset();
                         let plot = ChartModel::new(
                             self.service.fft_forward(&current_plot),
-                            current_plot.chart_display_type,
+                            current_plot.metadata.chart_display_type,
                             current_plot.sample_rate,
+                            &current_plot.metadata.title,
+                            Some(&current_plot.metadata.description), // TODO: Change description
                         );
                         self.state.add_plot(plot);
                     }
@@ -186,8 +188,10 @@ impl ChartViewComponent {
                                         CommandError::InvalidArguments(String::from(*hop_size))
                                     })?,
                                 ),
-                                current_plot.chart_display_type,
+                                current_plot.metadata.chart_display_type,
                                 current_plot.sample_rate,
+                                &current_plot.metadata.title,
+                                Some(&current_plot.metadata.description), // TODO: Change description
                             );
                             self.state.add_plot(plot);
                         } else {
@@ -208,8 +212,10 @@ impl ChartViewComponent {
                                         },
                                     )?),
                                 ),
-                                current_plot.chart_display_type,
+                                current_plot.metadata.chart_display_type,
                                 current_plot.sample_rate,
+                                &current_plot.metadata.title,
+                                Some(&current_plot.metadata.description), // TODO: Change description
                             );
                             self.state.add_plot(plot);
                         } else {
@@ -230,8 +236,10 @@ impl ChartViewComponent {
                                         },
                                     )?),
                                 ),
-                                current_plot.chart_display_type,
+                                current_plot.metadata.chart_display_type,
                                 current_plot.sample_rate,
+                                &current_plot.metadata.title,
+                                Some(&current_plot.metadata.description), // TODO: Change description
                             );
                             self.state.add_plot(plot);
                         } else {
@@ -253,8 +261,10 @@ impl ChartViewComponent {
                                         })?,
                                     ),
                                 ),
-                                current_plot.chart_display_type,
+                                current_plot.metadata.chart_display_type,
                                 current_plot.sample_rate,
+                                &current_plot.metadata.title,
+                                Some(&current_plot.metadata.description), // TODO: Change description
                             );
                             self.state.add_plot(plot);
                         } else {
@@ -276,8 +286,10 @@ impl ChartViewComponent {
                                         })?,
                                     ),
                                 ),
-                                current_plot.chart_display_type,
+                                current_plot.metadata.chart_display_type,
                                 current_plot.sample_rate,
+                                &current_plot.metadata.title,
+                                Some(&current_plot.metadata.description), // TODO: Change description
                             );
                             self.state.add_plot(plot);
                         } else {
@@ -288,8 +300,10 @@ impl ChartViewComponent {
                         let current_plot = self.state.current_dataset();
                         let plot = ChartModel::new(
                             self.service.haar_wavelet_transform(&current_plot),
-                            current_plot.chart_display_type,
+                            current_plot.metadata.chart_display_type,
                             current_plot.sample_rate,
+                            &current_plot.metadata.title,
+                            Some(&current_plot.metadata.description), // TODO: Change description
                         );
                         self.state.add_plot(plot);
                     }
@@ -307,7 +321,7 @@ impl ChartViewComponent {
             Dataset::default()
                 .marker(symbols::Marker::HalfBlock)
                 .style(Style::default().fg(Color::Cyan))
-                .graph_type(current_dataset.chart_display_type)
+                .graph_type(current_dataset.metadata.chart_display_type)
                 .data(&pure_coordinates),
         ];
 
