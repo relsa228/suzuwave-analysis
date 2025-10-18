@@ -1,5 +1,7 @@
 use anyhow::Error;
 
+use crate::models::chart_view::chart::chart_model::ChartModel;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ApplicationMode {
     Input,
@@ -14,12 +16,14 @@ pub struct ApplicationState {
     workspace_size: u16,
     version_component_size: u16,
     help_component_size: u16,
-
     chart_workspace_size: u16,
     file_explorer_size: u16,
 
     command: Option<String>,
     error: Option<String>,
+
+    charts: Vec<ChartModel>,
+    current_chart_id: usize,
 }
 
 impl ApplicationState {
@@ -34,6 +38,8 @@ impl ApplicationState {
             help_component_size: 0,
             command: None,
             error: None,
+            charts: Vec::new(),
+            current_chart_id: 0,
         }
     }
 
@@ -122,5 +128,25 @@ impl ApplicationState {
             self.file_explorer_size = 0;
             self.chart_workspace_size = 100;
         }
+    }
+
+    pub fn add_chart(&mut self, data: ChartModel) {
+        self.charts.push(data);
+        self.current_chart_id = self.charts.len() - 1;
+    }
+
+    pub fn delete_chart(&mut self) {
+        self.charts.remove(self.current_chart_id);
+        if self.current_chart_id > 0 {
+            self.current_chart_id -= 1;
+        }
+    }
+
+    pub fn get_current_chart(&self) -> ChartModel {
+        self.charts[self.current_chart_id].clone()
+    }
+
+    pub fn change_current_chart(&mut self, id: u32) {
+        self.current_chart_id = (id % self.charts.len() as u32) as usize;
     }
 }

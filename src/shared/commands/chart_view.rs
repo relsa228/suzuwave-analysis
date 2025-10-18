@@ -2,9 +2,6 @@ use strum_macros::{AsRefStr, EnumString};
 
 #[derive(Debug, EnumString, AsRefStr, PartialEq, Eq)]
 pub enum ChartViewCommands {
-    #[strum(serialize = ":of")]
-    OpenFile,
-
     #[strum(serialize = ":zi")]
     ZoomIn,
     #[strum(serialize = ":zo")]
@@ -28,9 +25,4 @@ pub enum ChartViewCommands {
     FftFilterBandStop,
     #[strum(serialize = ":hwt")]
     HaarWaveletTransform,
-
-    #[strum(serialize = ":cwv")]
-    CloseWorkingView,
-    #[strum(serialize = ":swv")]
-    SwitchWorkingView,
 }

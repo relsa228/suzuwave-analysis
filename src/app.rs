@@ -9,12 +9,16 @@ use std::{cell::RefCell, path::PathBuf, rc::Rc, str::FromStr};
 
 use crate::{
     components::{
-        about::AboutComponent, chart_view::ChartViewComponent,
-        command_console::CommandConsoleComponent, command_table::CommandTableComponent,
+        about::AboutComponent, chart_explorer::ChartExplorerComponent,
+        chart_view::ChartViewComponent, command_console::CommandConsoleComponent,
+        command_table::CommandTableComponent,
     },
     shared::{
         commands::general::GeneralCommands,
-        constants::{command::DEFAULT_COMMAND_PREFIX, general::DEFAULT_COLOR},
+        constants::{
+            chart_explorer::CHART_EXPLORER_WIDGET_NAME, command::DEFAULT_COMMAND_PREFIX,
+            general::DEFAULT_COLOR,
+        },
         errors::commands::CommandError,
     },
     states::app::{ApplicationMode, ApplicationState},
@@ -24,6 +28,7 @@ pub struct App {
     application_state: Rc<RefCell<ApplicationState>>,
     command_console: CommandConsoleComponent,
     chart_view_widget: ChartViewComponent,
+    chart_explorer_widget: ChartExplorerComponent,
     version_component: AboutComponent,
     help_component: CommandTableComponent,
 }
@@ -34,7 +39,8 @@ impl App {
         Self {
             application_state: application_state.clone(),
             command_console: CommandConsoleComponent::new(application_state.clone()),
-            chart_view_widget: ChartViewComponent::new(
+            chart_view_widget: ChartViewComponent::new(application_state.clone()),
+            chart_explorer_widget: ChartExplorerComponent::new(
                 initial_signal_file_path,
                 application_state.clone(),
             ),
@@ -80,7 +86,7 @@ impl App {
 
                 f.render_widget(
                     Block::default()
-                        .title("File Explorer")
+                        .title(CHART_EXPLORER_WIDGET_NAME)
                         .borders(Borders::ALL)
                         .style(Style::default().fg(DEFAULT_COLOR)),
                     workspace_chunks[0],
@@ -104,7 +110,10 @@ impl App {
                 if mode == ApplicationMode::Input || mode == ApplicationMode::Error {
                     self.command_console.handle_key_events(key);
                     self.chart_view_widget
-                        .update_from_state(self.application_state.clone())
+                        .update_from_state()
+                        .is_err_and(|err| self.application_state.borrow_mut().set_error(Some(err)));
+                    self.chart_explorer_widget
+                        .update_from_state()
                         .is_err_and(|err| self.application_state.borrow_mut().set_error(Some(err)));
                     self.update_from_state()
                         .is_err_and(|err| self.application_state.borrow_mut().set_error(Some(err)));
