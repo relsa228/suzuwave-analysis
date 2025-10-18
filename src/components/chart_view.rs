@@ -292,7 +292,6 @@ impl ChartViewComponent {
             .x_bounds([self.state.x_min(), self.state.x_max()])
             .y_bounds([self.state.y_min(), self.state.y_max()])
             .paint(|context| {
-                context.draw(self.state.canvas_style().map());
                 self.canvas_generate_labels(context, self.state.canvas_style().canvas_steps());
                 self.canvas_generate_grid(context, self.state.canvas_style().canvas_steps());
             });
