@@ -112,7 +112,11 @@ impl ChartViewComponent {
                         }
                     }
                     ChartViewCommands::FastFourierTransform => {
-                        let current_plot = self.state.current_chart();
+                        let current_plot = if let Some(chart) = self.state.current_chart() {
+                            chart
+                        } else {
+                            return Err(CommandError::NoChart.into());
+                        };
                         let current_plot_borrow = current_plot.borrow();
                         let plot = ChartModel::new(
                             self.service.fft_forward(&current_plot_borrow),
@@ -125,7 +129,11 @@ impl ChartViewComponent {
                     }
                     ChartViewCommands::ShortTimeFourierTransform => {
                         if let (Some(window_size), Some(hop_size)) = (args.get(1), args.get(2)) {
-                            let current_plot = self.state.current_chart();
+                            let current_plot = if let Some(chart) = self.state.current_chart() {
+                                chart
+                            } else {
+                                return Err(CommandError::NoChart.into());
+                            };
                             let current_plot_borrow = current_plot.borrow();
                             let plot = ChartModel::new(
                                 self.service.stft_forward(
@@ -149,7 +157,11 @@ impl ChartViewComponent {
                     }
                     ChartViewCommands::FftFilterLowPass => {
                         if let Some(points_arg) = args.get(1) {
-                            let current_plot = self.state.current_chart();
+                            let current_plot = if let Some(chart) = self.state.current_chart() {
+                                chart
+                            } else {
+                                return Err(CommandError::NoChart.into());
+                            };
                             let current_plot_borrow = current_plot.borrow();
                             let plot = ChartModel::new(
                                 self.service.apply_fft_filter(
@@ -174,7 +186,11 @@ impl ChartViewComponent {
                     }
                     ChartViewCommands::FftFilterHighPass => {
                         if let Some(points_arg) = args.get(1) {
-                            let current_plot = self.state.current_chart();
+                            let current_plot = if let Some(chart) = self.state.current_chart() {
+                                chart
+                            } else {
+                                return Err(CommandError::NoChart.into());
+                            };
                             let current_plot_borrow = current_plot.borrow();
                             let plot = ChartModel::new(
                                 self.service.apply_fft_filter(
@@ -199,7 +215,11 @@ impl ChartViewComponent {
                     }
                     ChartViewCommands::FftFilterBandPass => {
                         if let (Some(low_band), Some(high_band)) = (args.get(1), args.get(2)) {
-                            let current_plot = self.state.current_chart();
+                            let current_plot = if let Some(chart) = self.state.current_chart() {
+                                chart
+                            } else {
+                                return Err(CommandError::NoChart.into());
+                            };
                             let current_plot_borrow = current_plot.borrow();
                             let plot = ChartModel::new(
                                 self.service.apply_fft_filter(
@@ -225,7 +245,11 @@ impl ChartViewComponent {
                     }
                     ChartViewCommands::FftFilterBandStop => {
                         if let (Some(low_band), Some(high_band)) = (args.get(1), args.get(2)) {
-                            let current_plot = self.state.current_chart();
+                            let current_plot = if let Some(chart) = self.state.current_chart() {
+                                chart
+                            } else {
+                                return Err(CommandError::NoChart.into());
+                            };
                             let current_plot_borrow = current_plot.borrow();
                             let plot = ChartModel::new(
                                 self.service.apply_fft_filter(
@@ -250,7 +274,11 @@ impl ChartViewComponent {
                         }
                     }
                     ChartViewCommands::HaarWaveletTransform => {
-                        let current_plot = self.state.current_chart();
+                        let current_plot = if let Some(chart) = self.state.current_chart() {
+                            chart
+                        } else {
+                            return Err(CommandError::NoChart.into());
+                        };
                         let current_plot_borrow = current_plot.borrow();
                         let plot = ChartModel::new(
                             self.service.haar_wavelet_transform(&current_plot_borrow),
@@ -269,8 +297,15 @@ impl ChartViewComponent {
     }
 
     pub fn render(&mut self, f: &mut Frame, rect: Rect) {
-        let current_dataset = &self.app_state.borrow().get_current_chart();
-        self.state.set_current_chart(current_dataset.clone());
+        let chart = &self.app_state.borrow().get_current_chart();
+        let current_dataset = if let Some(chart) = chart {
+            chart
+        } else {
+            self.state.set_current_chart(None);
+            return;
+        };
+
+        self.state.set_current_chart(Some(current_dataset.clone()));
         let current_dataset_borrow = current_dataset.borrow();
         let pure_coordinates = current_dataset_borrow.data_to_pure_coordinates();
         let datasets = vec![

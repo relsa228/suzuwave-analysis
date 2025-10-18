@@ -15,7 +15,7 @@ impl AboutState {
     pub fn new() -> Self {
         Self {
             block_style: Style::default().fg(DEFAULT_COLOR),
-            text_style: Style::default().fg(Color::Green),
+            text_style: Style::default().fg(Color::Yellow),
             alignment: Alignment::Center,
         }
     }

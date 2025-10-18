@@ -87,7 +87,7 @@ impl CommandConsoleComponent {
             ApplicationMode::Input => {
                 self.enable_input_mode();
             }
-            ApplicationMode::Static => {
+            ApplicationMode::Static | ApplicationMode::Explorer => {
                 self.disable_input_mode();
             }
             ApplicationMode::Error => {

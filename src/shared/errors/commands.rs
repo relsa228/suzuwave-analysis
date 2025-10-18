@@ -13,4 +13,7 @@ pub enum CommandError {
 
     #[error("Try some commands, use :h for help")]
     EmptyCommand,
+
+    #[error("No chart selected, use :of to open a chart file")]
+    NoChart,
 }

@@ -111,6 +111,9 @@ impl App {
                         state.set_error(Some(CommandError::CommandSyntax(command).into()));
                     }
                     state.set_command(None);
+                } else if mode == ApplicationMode::Explorer {
+                    self.chart_explorer_widget.handle_key(key);
+                    self.handle_key_events(key);
                 } else {
                     self.chart_view_widget.handle_key_events(key);
                     self.handle_key_events(key);
@@ -158,6 +161,9 @@ impl App {
             }
             (_, KeyCode::Char('i') | KeyCode::Char('I')) => {
                 self.application_state.borrow_mut().to_input_mode()
+            }
+            (_, KeyCode::Char('e') | KeyCode::Char('E')) => {
+                self.application_state.borrow_mut().to_explorer_mode()
             }
             (_, KeyCode::Esc) => {
                 self.application_state.borrow_mut().to_static_mode();

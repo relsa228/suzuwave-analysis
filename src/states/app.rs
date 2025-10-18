@@ -8,6 +8,7 @@ use crate::models::chart_view::chart::chart_model::ChartModel;
 pub enum ApplicationMode {
     Input,
     Error,
+    Explorer,
     Static,
 }
 
@@ -99,6 +100,10 @@ impl ApplicationState {
         self.mode = ApplicationMode::Input;
     }
 
+    pub fn to_explorer_mode(&mut self) {
+        self.mode = ApplicationMode::Explorer;
+    }
+
     pub fn to_static_mode(&mut self) {
         self.mode = ApplicationMode::Static;
         self.version_component_size = 0;
@@ -144,12 +149,24 @@ impl ApplicationState {
         }
     }
 
-    pub fn get_current_chart(&self) -> Rc<RefCell<ChartModel>> {
-        self.charts[self.current_chart_id].clone()
+    pub fn get_current_chart(&self) -> Option<Rc<RefCell<ChartModel>>> {
+        self.charts.get(self.current_chart_id).cloned()
     }
 
     pub fn change_current_chart(&mut self, id: u32) {
         self.current_chart_id = (id % self.charts.len() as u32) as usize;
+    }
+
+    pub fn move_current_chart_forward(&mut self) {
+        self.current_chart_id = (self.current_chart_id + 1) % self.charts.len();
+    }
+
+    pub fn move_current_chart_backward(&mut self) {
+        self.current_chart_id = (self.current_chart_id + self.charts.len() - 1) % self.charts.len();
+    }
+
+    pub fn current_chart_id(&self) -> usize {
+        self.current_chart_id
     }
 
     pub fn charts(&self) -> Vec<Rc<RefCell<ChartModel>>> {

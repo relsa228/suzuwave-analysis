@@ -3,21 +3,19 @@ use crate::{
     models::files::file_types::FileType,
     shared::{
         commands::chart_explorer::ChartExplorerCommands,
-        constants::{
-            chart_explorer::CHART_EXPLORER_WIDGET_NAME, command::DEFAULT_COMMAND_PREFIX,
-            general::DEFAULT_COLOR,
-        },
+        constants::{chart_explorer::CHART_EXPLORER_WIDGET_NAME, command::DEFAULT_COMMAND_PREFIX},
         errors::{commands::CommandError, files::FileError},
     },
-    states::app::ApplicationState,
+    states::app::{ApplicationMode, ApplicationState},
 };
 use anyhow::Result;
+use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     Frame,
     layout::Rect,
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, List, ListItem},
+    widgets::{Block, Borders, List, ListItem, ListState},
 };
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -30,6 +28,7 @@ use std::{
 pub struct ChartExplorerComponent {
     app_state: Rc<RefCell<ApplicationState>>,
     file_parsers: HashMap<FileType, Box<dyn FileReadOnly>>,
+    list_state: ListState,
 }
 
 impl ChartExplorerComponent {
@@ -42,11 +41,21 @@ impl ChartExplorerComponent {
         let instance = Self {
             file_parsers: file_parsers,
             app_state,
+            list_state: ListState::default(),
         };
         if let Some(file) = initial_signal_file {
             let _ = instance.add_chart_from_file(file);
         }
         instance
+    }
+
+    pub fn handle_key(&mut self, key: KeyEvent) {
+        match key.code {
+            KeyCode::Up => self.app_state.borrow_mut().move_current_chart_backward(),
+            KeyCode::Down => self.app_state.borrow_mut().move_current_chart_forward(),
+            KeyCode::Char('d') | KeyCode::Char('D') => self.app_state.borrow_mut().delete_chart(),
+            _ => {}
+        }
     }
 
     pub fn update_from_state(&mut self) -> Result<()> {
@@ -95,6 +104,12 @@ impl ChartExplorerComponent {
     }
 
     pub fn render(&mut self, f: &mut Frame, rect: Rect) {
+        let (title_color, status_color, block_color) =
+            if self.app_state.borrow().mode() == ApplicationMode::Explorer {
+                (Color::Yellow, Color::Gray, Color::Yellow)
+            } else {
+                (Color::LightYellow, Color::DarkGray, Color::LightYellow)
+            };
         let items: Vec<ListItem> = self
             .app_state
             .borrow()
@@ -105,12 +120,12 @@ impl ChartExplorerComponent {
                 let title_line = Line::from(Span::styled(
                     chart.metadata.title.clone(),
                     Style::default()
-                        .fg(Color::Yellow)
+                        .fg(title_color)
                         .add_modifier(Modifier::BOLD),
                 ));
                 let desc_line = Line::from(Span::styled(
                     chart.metadata.description.clone(),
-                    Style::default().fg(Color::Gray),
+                    Style::default().fg(status_color),
                 ));
                 ListItem::new(vec![title_line, desc_line])
             })
@@ -121,17 +136,12 @@ impl ChartExplorerComponent {
                 Block::default()
                     .title(CHART_EXPLORER_WIDGET_NAME)
                     .borders(Borders::ALL)
-                    .style(Style::default().fg(DEFAULT_COLOR)),
-            )
-            .highlight_style(
-                Style::default()
-                    .bg(Color::Blue)
-                    .fg(Color::White)
-                    .add_modifier(Modifier::BOLD),
+                    .style(Style::default().fg(block_color)),
             )
             .highlight_symbol("➤ ");
-
-        f.render_widget(list, rect);
+        self.list_state
+            .select(Some(self.app_state.borrow().current_chart_id()));
+        f.render_stateful_widget(list, rect, &mut self.list_state);
     }
 
     fn add_chart_from_file(&self, path: PathBuf) -> Result<()> {
