@@ -37,6 +37,15 @@ impl VibricReadingClient {
         Ok(f32::from_le_bytes(buf))
     }
 
+    /// Vibric file parsing
+    ///
+    /// Parsing a Vibric file data according to the Vibric file format specification,
+    /// converting it to a ParsedFileData struct
+    ///
+    /// ---
+    ///
+    /// * `path`: file path to the Vibric file
+    /// * `channel`: channel number to parse
     fn parse_bin_file(&self, path: &str, channel: usize) -> Result<ParsedFileData> {
         let mut reader = BufReader::new(File::open(path)?);
         let mut signature = [0u8; 4];

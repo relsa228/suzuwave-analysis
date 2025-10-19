@@ -1,4 +1,5 @@
 use crate::{
+    components::component::Component,
     models::chart_view::chart::{chart_model::ChartModel, chart_transform::ChartTransform},
     services::chart_processor::{ChartProcessingService, FftFilterType},
     shared::{
@@ -40,7 +41,65 @@ impl ChartViewComponent {
         }
     }
 
-    pub fn handle_key_events(&mut self, key: KeyEvent) {
+    /// Create numeric labels for the chart
+    ///
+    /// This function generates numeric labels for the x and y axes of the chart.
+    ///
+    /// ---
+    ///
+    /// * `context`: The canvas context to draw the labels on.
+    /// * `steps`: The number of steps to divide the axis into.
+    fn canvas_generate_labels(&self, context: &mut Context<'_>, steps: u32) {
+        let step = (self.state.x_max() - self.state.x_min()) / (steps) as f64;
+        (1..steps).for_each(|i| {
+            let val = self.state.x_min() + step * i as f64;
+            context.print(val, self.state.y_min(), format!("{:.4}", val));
+        });
+
+        let step = (self.state.y_max() - self.state.y_min()) / (steps) as f64;
+        (1..steps).for_each(|i| {
+            let val = self.state.y_min() + step * i as f64;
+            context.print(self.state.x_min(), val, format!("{:.4}", val));
+        });
+    }
+
+    /// Generate grid lines for the chart.
+    ///
+    /// This function generates grid lines on canvas for the x and y axes of the chart.
+    ///
+    /// ---
+    ///
+    /// * `context`: The canvas context to draw the grid lines on.
+    /// * `steps`: The number of steps to divide the axis into.
+    fn canvas_generate_grid(&self, context: &mut Context<'_>, steps: u32) {
+        let step = (self.state.x_max() - self.state.x_min()) / (steps) as f64;
+        (0..steps).for_each(|i| {
+            let val = self.state.x_min() + step * i as f64;
+            context.draw(&canvas::Line::new(
+                val,
+                self.state.y_min(),
+                val,
+                self.state.y_max(),
+                self.state.canvas_style().canvas_color,
+            ));
+        });
+
+        let step = (self.state.y_max() - self.state.y_min()) / (steps) as f64;
+        (0..steps).for_each(|i| {
+            let val = self.state.y_min() + step * i as f64;
+            context.draw(&canvas::Line::new(
+                self.state.x_min(),
+                val,
+                self.state.x_max(),
+                val,
+                self.state.canvas_style().canvas_color,
+            ));
+        });
+    }
+}
+
+impl Component for ChartViewComponent {
+    fn handle_key_event(&mut self, key: KeyEvent) {
         match key.code {
             KeyCode::Left => {
                 self.state.chart_move(true, DEFAULT_CHART_X_MOVE);
@@ -54,7 +113,41 @@ impl ChartViewComponent {
         }
     }
 
-    pub fn update_from_state(&mut self) -> Result<()> {
+    fn render(&mut self, f: &mut Frame, rect: Rect) {
+        let Some(current_dataset) = &self.app_state.borrow().get_current_chart() else {
+            self.state.set_current_chart(None);
+            return;
+        };
+        self.state.set_current_chart(Some(current_dataset.clone()));
+        let current_dataset_borrow = current_dataset.borrow();
+        let pure_coordinates = current_dataset_borrow.data_to_pure_coordinates();
+        let datasets = vec![
+            Dataset::default()
+                .marker(symbols::Marker::HalfBlock)
+                .style(Style::default().fg(Color::Cyan))
+                .graph_type(current_dataset_borrow.metadata.chart_display_type)
+                .data(&pure_coordinates),
+        ];
+
+        let chart = Chart::new(datasets)
+            .block(Block::default().borders(Borders::NONE))
+            .x_axis(Axis::default().bounds([self.state.x_min(), self.state.x_max()]))
+            .y_axis(Axis::default().bounds([self.state.y_min(), self.state.y_max()]));
+
+        let canvas = Canvas::default()
+            .block(Block::new())
+            .marker(Marker::Braille)
+            .x_bounds([self.state.x_min(), self.state.x_max()])
+            .y_bounds([self.state.y_min(), self.state.y_max()])
+            .paint(|context| {
+                self.canvas_generate_labels(context, self.state.canvas_style().canvas_steps);
+                self.canvas_generate_grid(context, self.state.canvas_style().canvas_steps);
+            });
+        f.render_widget(canvas, rect);
+        f.render_widget(chart, rect);
+    }
+
+    fn update_from_state(&mut self) -> Result<()> {
         let mut state_borrow = self.app_state.borrow_mut();
         let Some(cmd) = state_borrow.command() else {
             return Ok(());
@@ -109,7 +202,7 @@ impl ChartViewComponent {
                 };
                 let current_chart_borrow = current_chart.borrow();
                 let chart = ChartModel::new(
-                    self.service.fft_forward(&current_chart_borrow),
+                    self.service.fft_forward(&current_chart_borrow)?,
                     current_chart_borrow.metadata.chart_display_type,
                     current_chart_borrow.sample_rate,
                     &current_chart_borrow.metadata.title,
@@ -154,7 +247,8 @@ impl ChartViewComponent {
                 };
                 let current_chart_borrow = current_chart.borrow();
                 let chart = ChartModel::new(
-                    self.service.apply_fft_filter(&current_chart_borrow, filter),
+                    self.service
+                        .apply_fft_filter(&current_chart_borrow, filter)?,
                     current_chart_borrow.metadata.chart_display_type,
                     current_chart_borrow.sample_rate,
                     &current_chart_borrow.metadata.title,
@@ -175,7 +269,8 @@ impl ChartViewComponent {
                 );
                 let current_chart_borrow = current_chart.borrow();
                 let chart = ChartModel::new(
-                    self.service.apply_fft_filter(&current_chart_borrow, filter),
+                    self.service
+                        .apply_fft_filter(&current_chart_borrow, filter)?,
                     current_chart_borrow.metadata.chart_display_type,
                     current_chart_borrow.sample_rate,
                     &current_chart_borrow.metadata.title,
@@ -200,7 +295,8 @@ impl ChartViewComponent {
                 );
                 let current_chart_borrow = current_chart.borrow();
                 let chart = ChartModel::new(
-                    self.service.apply_fft_filter(&current_chart_borrow, filter),
+                    self.service
+                        .apply_fft_filter(&current_chart_borrow, filter)?,
                     current_chart_borrow.metadata.chart_display_type,
                     current_chart_borrow.sample_rate,
                     &current_chart_borrow.metadata.title,
@@ -225,7 +321,8 @@ impl ChartViewComponent {
                 );
                 let current_chart_borrow = current_chart.borrow();
                 let chart = ChartModel::new(
-                    self.service.apply_fft_filter(&current_chart_borrow, filter),
+                    self.service
+                        .apply_fft_filter(&current_chart_borrow, filter)?,
                     current_chart_borrow.metadata.chart_display_type,
                     current_chart_borrow.sample_rate,
                     &current_chart_borrow.metadata.title,
@@ -239,7 +336,7 @@ impl ChartViewComponent {
                 };
                 let current_chart_borrow = current_chart.borrow();
                 let chart = ChartModel::new(
-                    self.service.haar_wavelet_transform(&current_chart_borrow),
+                    self.service.haar_wavelet_transform(&current_chart_borrow)?,
                     current_chart_borrow.metadata.chart_display_type,
                     current_chart_borrow.sample_rate,
                     &current_chart_borrow.metadata.title,
@@ -250,79 +347,5 @@ impl ChartViewComponent {
         };
         state_borrow.set_command(None);
         Ok(())
-    }
-
-    pub fn render(&mut self, f: &mut Frame, rect: Rect) {
-        let Some(current_dataset) = &self.app_state.borrow().get_current_chart() else {
-            self.state.set_current_chart(None);
-            return;
-        };
-        self.state.set_current_chart(Some(current_dataset.clone()));
-        let current_dataset_borrow = current_dataset.borrow();
-        let pure_coordinates = current_dataset_borrow.data_to_pure_coordinates();
-        let datasets = vec![
-            Dataset::default()
-                .marker(symbols::Marker::HalfBlock)
-                .style(Style::default().fg(Color::Cyan))
-                .graph_type(current_dataset_borrow.metadata.chart_display_type)
-                .data(&pure_coordinates),
-        ];
-
-        let chart = Chart::new(datasets)
-            .block(Block::default().borders(Borders::NONE))
-            .x_axis(Axis::default().bounds([self.state.x_min(), self.state.x_max()]))
-            .y_axis(Axis::default().bounds([self.state.y_min(), self.state.y_max()]));
-
-        let canvas = Canvas::default()
-            .block(Block::new())
-            .marker(Marker::Braille)
-            .x_bounds([self.state.x_min(), self.state.x_max()])
-            .y_bounds([self.state.y_min(), self.state.y_max()])
-            .paint(|context| {
-                self.canvas_generate_labels(context, self.state.canvas_style().canvas_steps);
-                self.canvas_generate_grid(context, self.state.canvas_style().canvas_steps);
-            });
-        f.render_widget(canvas, rect);
-        f.render_widget(chart, rect);
-    }
-
-    fn canvas_generate_labels(&self, context: &mut Context<'_>, steps: u32) {
-        let step = (self.state.x_max() - self.state.x_min()) / (steps) as f64;
-        (1..steps).for_each(|i| {
-            let val = self.state.x_min() + step * i as f64;
-            context.print(val, self.state.y_min(), format!("{:.4}", val));
-        });
-
-        let step = (self.state.y_max() - self.state.y_min()) / (steps) as f64;
-        (1..steps).for_each(|i| {
-            let val = self.state.y_min() + step * i as f64;
-            context.print(self.state.x_min(), val, format!("{:.4}", val));
-        });
-    }
-
-    fn canvas_generate_grid(&self, context: &mut Context<'_>, steps: u32) {
-        let step = (self.state.x_max() - self.state.x_min()) / (steps) as f64;
-        (0..steps).for_each(|i| {
-            let val = self.state.x_min() + step * i as f64;
-            context.draw(&canvas::Line::new(
-                val,
-                self.state.y_min(),
-                val,
-                self.state.y_max(),
-                self.state.canvas_style().canvas_color,
-            ));
-        });
-
-        let step = (self.state.y_max() - self.state.y_min()) / (steps) as f64;
-        (0..steps).for_each(|i| {
-            let val = self.state.y_min() + step * i as f64;
-            context.draw(&canvas::Line::new(
-                self.state.x_min(),
-                val,
-                self.state.x_max(),
-                val,
-                self.state.canvas_style().canvas_color,
-            ));
-        });
     }
 }

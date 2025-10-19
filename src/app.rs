@@ -2,7 +2,7 @@ use crate::{
     components::{
         about::AboutComponent, chart_explorer::ChartExplorerComponent,
         chart_view::ChartViewComponent, command_console::CommandConsoleComponent,
-        command_table::CommandTableComponent,
+        command_table::CommandTableComponent, component::Component,
     },
     shared::{
         commands::general::GeneralCommands,
@@ -94,29 +94,30 @@ impl App {
         Ok(())
     }
 
-    #[allow(unused_must_use)]
     fn handle_crossterm_events(&mut self) -> color_eyre::Result<()> {
         match event::read()? {
             Event::Key(key) if key.kind == KeyEventKind::Press => {
                 let mode = self.application_state.borrow().mode();
                 match mode {
                     ApplicationMode::Explorer => {
-                        self.chart_explorer_widget.handle_key(key);
+                        self.chart_explorer_widget.handle_key_event(key);
                         self.handle_key_events(key);
                     }
                     ApplicationMode::Input | ApplicationMode::Error => {
-                        self.command_console.handle_key_events(key);
-                        self.chart_view_widget
+                        self.command_console.handle_key_event(key);
+                        let _ = self
+                            .chart_view_widget
                             .update_from_state()
                             .is_err_and(|err| {
                                 self.application_state.borrow_mut().set_error(Some(err))
                             });
-                        self.chart_explorer_widget
+                        let _ = self
+                            .chart_explorer_widget
                             .update_from_state()
                             .is_err_and(|err| {
                                 self.application_state.borrow_mut().set_error(Some(err))
                             });
-                        self.update_from_state().is_err_and(|err| {
+                        let _ = self.update_from_state().is_err_and(|err| {
                             self.application_state.borrow_mut().set_error(Some(err))
                         });
                         let mut state = self.application_state.borrow_mut();
@@ -128,7 +129,7 @@ impl App {
                         state.set_command(None);
                     }
                     _ => {
-                        self.chart_view_widget.handle_key_events(key);
+                        self.chart_view_widget.handle_key_event(key);
                         self.handle_key_events(key);
                     }
                 }
@@ -159,7 +160,9 @@ impl App {
             GeneralCommands::Help => {
                 app_state.show_help();
             }
-            GeneralCommands::OpenCloseChartsExplorer => app_state.change_file_explorer_visibility(),
+            GeneralCommands::OpenCloseChartsExplorer => {
+                app_state.change_chart_explorer_visibility()
+            }
             GeneralCommands::OpenSettings => unimplemented!(),
             GeneralCommands::Quit => app_state.quit(),
         }

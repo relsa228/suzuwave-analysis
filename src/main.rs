@@ -1,8 +1,3 @@
-// TODO:
-// chart type && add docs
-//
-// add mouse events
-
 use clap::Parser;
 use suzu::{app::App, models::cli::args::Args, utils::cli_helper::CliHelper};
 

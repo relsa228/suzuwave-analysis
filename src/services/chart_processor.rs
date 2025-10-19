@@ -3,7 +3,9 @@ use kofft::{Complex32, stft::stft, wavelet::haar_forward_inplace_stack, window::
 use rustfft::{FftPlanner, num_complex::Complex};
 
 use crate::{
-    models::chart_view::chart::{chart_model::ChartModel, point::Point},
+    models::chart_view::chart::{
+        chart_model::ChartModel, chart_transform::ChartTransform, point::Point,
+    },
     shared::errors::chart_processing::ChartProcessingError,
 };
 
@@ -26,7 +28,17 @@ impl ChartProcessingService {
         }
     }
 
-    pub fn fft_forward(&mut self, chart: &ChartModel) -> Vec<Point> {
+    /// Apply FFT transformation
+    ///
+    /// Execute FFT transformation on the given STANDARD view chart data.
+    ///
+    /// ---
+    ///
+    /// * `chart`: The chart data to be transformed.
+    pub fn fft_forward(&mut self, chart: &ChartModel) -> Result<Vec<Point>> {
+        if chart.metadata.transform != ChartTransform::Standard {
+            return Err(anyhow!(ChartProcessingError::NonStandard));
+        }
         let mut buffer: Vec<Complex<f64>> =
             chart.data.iter().map(|p| Complex::new(p.y, 0.0)).collect();
 
@@ -43,7 +55,7 @@ impl ChartProcessingService {
             shifted[i + half] = buffer[i];
         }
 
-        shifted
+        Ok(shifted
             .iter()
             .enumerate()
             .filter_map(|(i, c)| {
@@ -55,15 +67,28 @@ impl ChartProcessingService {
                     Some(Point::new(freq, norm))
                 }
             })
-            .collect()
+            .collect())
     }
 
+    /// Apply STFT transformation
+    ///
+    /// Execute STFT transformation on the given STANDARD view chart data.
+    /// Use the stake-only approach to reduce memory usage.
+    ///
+    /// ---
+    ///
+    /// * `chart`: The chart data to be transformed.
+    /// * `window_size`: The size of the Hann window to use for the STFT.
+    /// * `hop_size`: The hop size between frames.
     pub fn stft_forward(
         &self,
         chart: &ChartModel,
         window_size: usize,
         hop_size: usize,
     ) -> Result<Vec<Point>> {
+        if chart.metadata.transform != ChartTransform::Standard {
+            return Err(anyhow!(ChartProcessingError::NonStandard));
+        }
         let y: Vec<f32> = chart.data.iter().map(|point| point.y as f32).collect();
         let window = hann(window_size);
         let fft = vec![Complex32::new(0.0, 0.0); window.len()];
@@ -87,8 +112,20 @@ impl ChartProcessingService {
         Ok(res)
     }
 
-    pub fn apply_fft_filter(&self, chart: &ChartModel, filter: FftFilterType) -> Vec<Point> {
-        chart
+    /// Apply FFT filter
+    ///
+    /// Apply frequency filter to the given chart.
+    ///
+    /// ---
+    ///
+    /// * `chart`: The chart to apply the filter to.
+    /// * `filter`: The type of filter to apply (LowPass, HighPass, BandPass, BandStop).
+    pub fn apply_fft_filter(
+        &self,
+        chart: &ChartModel,
+        filter: FftFilterType,
+    ) -> Result<Vec<Point>> {
+        Ok(chart
             .data
             .iter()
             .filter_map(|p| {
@@ -103,10 +140,20 @@ impl ChartProcessingService {
                     None
                 }
             })
-            .collect()
+            .collect())
     }
 
-    pub fn haar_wavelet_transform(&self, chart: &ChartModel) -> Vec<Point> {
+    /// Apply Wavelet Transform.
+    ///
+    /// This function applies the Haar Wavelet Transform to the chart data.
+    ///
+    /// ---
+    ///
+    /// * `chart`: The chart data to be transformed.
+    pub fn haar_wavelet_transform(&self, chart: &ChartModel) -> Result<Vec<Point>> {
+        if chart.metadata.transform != ChartTransform::Standard {
+            return Err(anyhow!(ChartProcessingError::NonStandard));
+        }
         let y: Vec<f32> = chart.data.iter().map(|point| point.y as f32).collect();
 
         let mut freq_data: [f32; u32::MAX as usize] = [0.0; u32::MAX as usize];
@@ -124,10 +171,10 @@ impl ChartProcessingService {
             .to_vec()
             .drain(0..approx_end_index)
             .collect::<Vec<f32>>();
-        approx
+        Ok(approx
             .iter()
             .enumerate()
             .map(|(i, v)| Point::new(i as f64, *v as f64))
-            .collect::<Vec<Point>>()
+            .collect::<Vec<Point>>())
     }
 }

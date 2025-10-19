@@ -20,7 +20,7 @@ pub struct ApplicationState {
     version_component_size: u16,
     help_component_size: u16,
     chart_workspace_size: u16,
-    file_explorer_size: u16,
+    chart_explorer_size: u16,
 
     command: Option<String>,
     error: Option<String>,
@@ -34,7 +34,7 @@ impl ApplicationState {
         Self {
             is_running: true,
             mode: ApplicationMode::Static,
-            file_explorer_size: 15,
+            chart_explorer_size: 15,
             chart_workspace_size: 85,
             workspace_size: 100,
             version_component_size: 0,
@@ -56,7 +56,7 @@ impl ApplicationState {
     }
 
     pub fn file_explorer_size(&self) -> u16 {
-        self.file_explorer_size
+        self.chart_explorer_size
     }
 
     pub fn chart_workspace_size(&self) -> u16 {
@@ -119,24 +119,27 @@ impl ApplicationState {
     }
 
     // Show widgets
+    /// Show version information widget.
     pub fn show_version(&mut self) {
         self.to_static_mode();
         self.workspace_size = 0;
         self.version_component_size = 100;
     }
 
+    /// Show help widget.
     pub fn show_help(&mut self) {
         self.to_static_mode();
         self.workspace_size = 0;
         self.help_component_size = 100;
     }
 
-    pub fn change_file_explorer_visibility(&mut self) {
-        if self.file_explorer_size == 0 {
-            self.file_explorer_size = 15;
+    /// Open/close chart explorer widget.
+    pub fn change_chart_explorer_visibility(&mut self) {
+        if self.chart_explorer_size == 0 {
+            self.chart_explorer_size = 15;
             self.chart_workspace_size = 85;
         } else {
-            self.file_explorer_size = 0;
+            self.chart_explorer_size = 0;
             self.chart_workspace_size = 100;
         }
     }
@@ -170,11 +173,11 @@ impl ApplicationState {
         self.current_chart_id = (id % self.charts.len() as u32) as usize;
     }
 
-    pub fn move_current_chart_forward(&mut self) {
+    pub fn move_charts_cursor_forward(&mut self) {
         self.current_chart_id = (self.current_chart_id + 1) % self.charts.len();
     }
 
-    pub fn move_current_chart_backward(&mut self) {
+    pub fn move_charts_cursor_backward(&mut self) {
         self.current_chart_id = (self.current_chart_id + self.charts.len() - 1) % self.charts.len();
     }
 }

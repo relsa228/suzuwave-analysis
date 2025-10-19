@@ -11,6 +11,9 @@ impl CliHelper {
         CliHelper { args }
     }
 
+    /// Process the input file path
+    ///
+    /// Returns the path from the `f` argument if it exists, otherwise None
     pub fn process_path(&self) -> Option<PathBuf> {
         if let Some(f) = self.args.f.clone() {
             let path = Path::new(f.as_str());
@@ -24,6 +27,9 @@ impl CliHelper {
         }
     }
 
+    /// Display help message
+    ///
+    /// Prints the help message to the console
     pub fn help(&self) -> bool {
         if self.args.help || self.args.h {
             println!("CLI usage: suzu [OPTIONS]");
@@ -38,6 +44,9 @@ impl CliHelper {
         }
     }
 
+    /// Display version message
+    ///
+    /// Prints the version message to the console
     pub fn version(&self) -> bool {
         if self.args.version || self.args.v {
             println!("suzu v{}", env!("CARGO_PKG_VERSION"));

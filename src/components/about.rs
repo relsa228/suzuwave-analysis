@@ -1,4 +1,7 @@
-use crate::{shared::constants::about::ABOUT_TITLE, states::about::AboutState};
+use crate::{
+    components::component::Component, shared::constants::about::ABOUT_TITLE,
+    states::about::AboutState,
+};
 use ratatui::{
     Frame,
     layout::Rect,
@@ -15,8 +18,10 @@ impl AboutComponent {
             state: AboutState::new(),
         }
     }
+}
 
-    pub fn render(&mut self, f: &mut Frame, rect: Rect) {
+impl Component for AboutComponent {
+    fn render(&mut self, f: &mut Frame, rect: Rect) {
         let version = format!(
 "  ____                  _             ____  _                                           _                 \n/ ___| _   _ _____   _| |__   __ _  / ___|(_) __ _ _ __   __ _| |    / \\   _ __   __ _| |_   _ ___(_)___
 \\___ \\| | | |_  / | | | '_ \\ / _` | \\___ \\| |/ _` | '_ \\ / _` | |   / _ \\ | '_ \\ / _` | | | | / __| / __|
@@ -82,5 +87,13 @@ impl AboutComponent {
             )
             .alignment(self.state.alignment());
         f.render_widget(version_paragraph, rect);
+    }
+
+    fn handle_key_event(&mut self, _key: crossterm::event::KeyEvent) {
+        unimplemented!()
+    }
+
+    fn update_from_state(&mut self) -> anyhow::Result<()> {
+        unimplemented!()
     }
 }

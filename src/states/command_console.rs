@@ -49,7 +49,7 @@ impl CommandConsoleState {
         self.history_cursor = self.command_history.len();
     }
 
-    pub fn move_history_cursor(&mut self, forward: bool) {
+    pub fn move_history_cache_cursor(&mut self, forward: bool) {
         self.history_cursor = if !forward {
             if self.history_cursor + 1 < self.command_history.len() {
                 self.history_cursor + 1
@@ -118,7 +118,7 @@ impl CommandConsoleState {
         self.style_as_mut().border_color = Color::Green;
     }
 
-    pub fn cursor_move(&mut self, left: bool) {
+    pub fn input_cursor_move(&mut self, left: bool) {
         if left {
             if self.cursor_position > 1 {
                 self.cursor_position -= 1;

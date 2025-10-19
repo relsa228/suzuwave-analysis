@@ -1,4 +1,5 @@
 use crate::{
+    components::component::Component,
     shared::constants::command_table::{BLOCK_TITLE, COMMAND_LIST, COMMAND_LIST_TABLE_HEADERS},
     states::command_table::CommandTableState,
 };
@@ -18,8 +19,10 @@ impl CommandTableComponent {
             state: CommandTableState::new(),
         }
     }
+}
 
-    pub fn render(&mut self, f: &mut Frame, rect: Rect) {
+impl Component for CommandTableComponent {
+    fn render(&mut self, f: &mut Frame, rect: Rect) {
         let rows = COMMAND_LIST
             .iter()
             .map(|row_data| {
@@ -48,5 +51,13 @@ impl CommandTableComponent {
             );
 
         f.render_widget(table, rect);
+    }
+
+    fn handle_key_event(&mut self, _key: crossterm::event::KeyEvent) {
+        unimplemented!()
+    }
+
+    fn update_from_state(&mut self) -> anyhow::Result<()> {
+        unimplemented!()
     }
 }

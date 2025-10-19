@@ -7,9 +7,12 @@ use ratatui::{
 };
 use std::{cell::RefCell, rc::Rc};
 
-use crate::states::{
-    app::{ApplicationMode, ApplicationState},
-    command_console::CommandConsoleState,
+use crate::{
+    components::component::Component,
+    states::{
+        app::{ApplicationMode, ApplicationState},
+        command_console::CommandConsoleState,
+    },
 };
 
 pub struct CommandConsoleComponent {
@@ -25,7 +28,46 @@ impl CommandConsoleComponent {
         }
     }
 
-    pub fn handle_key_events(&mut self, key: KeyEvent) {
+    /// Go to the input mode.
+    ///
+    /// This function sets the component's state to input mode.
+    /// In this mode, the user can input and edit commands.
+    fn enable_input_mode(&mut self) {
+        let mut state = self.state.borrow_mut();
+        if self.app_state.borrow().mode() == ApplicationMode::Input {
+            state.style_as_mut().border_color = Color::Green;
+            state.style_as_mut().input_color = Color::Green;
+        } else {
+            state.style_as_mut().border_color = Color::Red;
+            state.style_as_mut().input_color = Color::Red;
+        }
+    }
+
+    /// Go to the normal mode.
+    ///
+    /// This function sets the component's state to normal mode.
+    /// In this mode, the user can only view the commands.
+    fn disable_input_mode(&mut self) {
+        let mut state = self.state.borrow_mut();
+        state.style_as_mut().border_color = Color::LightGreen;
+        state.style_as_mut().input_color = Color::LightGreen;
+    }
+
+    /// Go to the error mode.
+    ///
+    /// In this mode, the user can only view the error message and flush it.
+    fn set_error(&self) {
+        let mut state = self.app_state.borrow_mut();
+        if let Some(error) = state.error() {
+            let error_str = error.to_string();
+            self.state.borrow_mut().set_error(error_str);
+            state.set_error(None);
+        }
+    }
+}
+
+impl Component for CommandConsoleComponent {
+    fn handle_key_event(&mut self, key: KeyEvent) {
         let mut state = self.state.borrow_mut();
         let is_error = self.app_state.borrow().mode() == ApplicationMode::Error;
         match key.code {
@@ -45,21 +87,21 @@ impl CommandConsoleComponent {
             }
             KeyCode::Left => {
                 if !is_error {
-                    state.cursor_move(true);
+                    state.input_cursor_move(true);
                 }
             }
             KeyCode::Right => {
                 if !is_error {
-                    state.cursor_move(false);
+                    state.input_cursor_move(false);
                 }
             }
             KeyCode::Up => {
                 state.clear_error();
-                state.move_history_cursor(true);
+                state.move_history_cache_cursor(true);
             }
             KeyCode::Down => {
                 state.clear_error();
-                state.move_history_cursor(false);
+                state.move_history_cache_cursor(false);
             }
             KeyCode::Enter => {
                 if !is_error {
@@ -81,7 +123,7 @@ impl CommandConsoleComponent {
         }
     }
 
-    pub fn render(&mut self, f: &mut Frame, rect: Rect) {
+    fn render(&mut self, f: &mut Frame, rect: Rect) {
         let mode = self.app_state.borrow().mode();
         match mode {
             ApplicationMode::Input => {
@@ -107,29 +149,7 @@ impl CommandConsoleComponent {
         f.render_widget(input_widget, rect);
     }
 
-    fn enable_input_mode(&mut self) {
-        let mut state = self.state.borrow_mut();
-        if self.app_state.borrow().mode() == ApplicationMode::Input {
-            state.style_as_mut().border_color = Color::Green;
-            state.style_as_mut().input_color = Color::Green;
-        } else {
-            state.style_as_mut().border_color = Color::Red;
-            state.style_as_mut().input_color = Color::Red;
-        }
-    }
-
-    fn disable_input_mode(&mut self) {
-        let mut state = self.state.borrow_mut();
-        state.style_as_mut().border_color = Color::LightGreen;
-        state.style_as_mut().input_color = Color::LightGreen;
-    }
-
-    fn set_error(&self) {
-        let mut state = self.app_state.borrow_mut();
-        if let Some(error) = state.error() {
-            let error_str = error.to_string();
-            self.state.borrow_mut().set_error(error_str);
-            state.set_error(None);
-        }
+    fn update_from_state(&mut self) -> anyhow::Result<()> {
+        unimplemented!()
     }
 }

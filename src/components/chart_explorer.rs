@@ -1,5 +1,6 @@
 use crate::{
     clients::{files::vibric::VibricReadingClient, traits::file_read_only::FileReadOnly},
+    components::component::Component,
     models::files::file_types::FileType,
     shared::{
         commands::chart_explorer::ChartExplorerCommands,
@@ -54,10 +55,35 @@ impl ChartExplorerComponent {
         instance
     }
 
-    pub fn handle_key(&mut self, key: KeyEvent) {
+    /// Add new chart
+    ///
+    /// Load a chart from a file
+    ///
+    /// ---
+    ///
+    /// * `path`: The path to the file to load
+    fn add_chart_from_file(&self, path: PathBuf) -> Result<()> {
+        let extension = if let Some(extension) = path.extension() {
+            extension.to_str().ok_or(FileError::ExtensionParseError)?
+        } else {
+            return Err(anyhow!(FileError::PathParseError));
+        };
+        let parser = self
+            .file_parsers
+            .get(&FileType::from_str(&extension)?)
+            .ok_or(FileError::UnsupportedType)?;
+        let data = parser.parse_signal_file(path.to_str().ok_or(FileError::PathParseError)?, 0)?;
+        self.app_state.borrow_mut().add_chart(data);
+
+        Ok(())
+    }
+}
+
+impl Component for ChartExplorerComponent {
+    fn handle_key_event(&mut self, key: KeyEvent) {
         match key.code {
-            KeyCode::Up => self.app_state.borrow_mut().move_current_chart_backward(),
-            KeyCode::Down => self.app_state.borrow_mut().move_current_chart_forward(),
+            KeyCode::Up => self.app_state.borrow_mut().move_charts_cursor_backward(),
+            KeyCode::Down => self.app_state.borrow_mut().move_charts_cursor_forward(),
             KeyCode::Char(DELETE_KEY_1) | KeyCode::Char(DELETE_KEY_2) => {
                 self.app_state.borrow_mut().delete_current_chart()
             }
@@ -65,7 +91,7 @@ impl ChartExplorerComponent {
         }
     }
 
-    pub fn update_from_state(&mut self) -> Result<()> {
+    fn update_from_state(&mut self) -> Result<()> {
         let mut state_borrow = self.app_state.borrow_mut();
         let Some(cmd) = state_borrow.command() else {
             return Ok(());
@@ -108,7 +134,7 @@ impl ChartExplorerComponent {
         Ok(())
     }
 
-    pub fn render(&mut self, f: &mut Frame, rect: Rect) {
+    fn render(&mut self, f: &mut Frame, rect: Rect) {
         let app_state = self.app_state.borrow();
         let (title_color, status_color, block_color) =
             if app_state.mode() == ApplicationMode::Explorer {
@@ -145,21 +171,5 @@ impl ChartExplorerComponent {
             .highlight_symbol(HIGHLIGHT_SYMBOL);
         self.list_state.select(Some(app_state.current_chart_id()));
         f.render_stateful_widget(list, rect, &mut self.list_state);
-    }
-
-    fn add_chart_from_file(&self, path: PathBuf) -> Result<()> {
-        let extension = if let Some(extension) = path.extension() {
-            extension.to_str().ok_or(FileError::ExtensionParseError)?
-        } else {
-            return Err(anyhow!(FileError::PathParseError));
-        };
-        let parser = self
-            .file_parsers
-            .get(&FileType::from_str(&extension)?)
-            .ok_or(FileError::UnsupportedType)?;
-        let data = parser.parse_signal_file(path.to_str().ok_or(FileError::PathParseError)?, 0)?;
-        self.app_state.borrow_mut().add_chart(data);
-
-        Ok(())
     }
 }
