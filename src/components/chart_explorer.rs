@@ -23,7 +23,7 @@ use ratatui::{
     text::{Line, Span},
     widgets::{Block, Borders, List, ListItem, ListState},
 };
-use std::cell::RefCell;
+use std::cell::{RefCell, RefMut};
 use std::rc::Rc;
 use std::{
     collections::HashMap,
@@ -50,7 +50,7 @@ impl ChartExplorerComponent {
             list_state: ListState::default(),
         };
         if let Some(file) = initial_signal_file {
-            let _ = instance.add_chart_from_file(file);
+            let _ = instance.add_chart_from_file(file, &mut instance.app_state.borrow_mut());
         }
         instance
     }
@@ -62,7 +62,11 @@ impl ChartExplorerComponent {
     /// ---
     ///
     /// * `path`: The path to the file to load
-    fn add_chart_from_file(&self, path: PathBuf) -> Result<()> {
+    fn add_chart_from_file(
+        &self,
+        path: PathBuf,
+        state: &mut RefMut<'_, ApplicationState>,
+    ) -> Result<()> {
         let extension = if let Some(extension) = path.extension() {
             extension.to_str().ok_or(FileError::ExtensionParseError)?
         } else {
@@ -73,7 +77,7 @@ impl ChartExplorerComponent {
             .get(&FileType::from_str(&extension)?)
             .ok_or(FileError::UnsupportedType)?;
         let data = parser.parse_signal_file(path.to_str().ok_or(FileError::PathParseError)?, 0)?;
-        self.app_state.borrow_mut().add_chart(data);
+        state.add_chart(data);
 
         Ok(())
     }
@@ -105,7 +109,7 @@ impl Component for ChartExplorerComponent {
         };
         match command {
             ChartExplorerCommands::CloseWorkingView => {
-                self.app_state.borrow_mut().delete_current_chart();
+                state_borrow.delete_current_chart();
             }
             ChartExplorerCommands::SwitchWorkingView => {
                 let points_arg = if let Some(points_arg) = args.get(1) {
@@ -115,7 +119,7 @@ impl Component for ChartExplorerComponent {
                 } else {
                     return Err(CommandError::NotEnoughArguments.into());
                 };
-                self.app_state.borrow_mut().change_current_chart(points_arg);
+                state_borrow.change_current_chart(points_arg);
             }
             ChartExplorerCommands::OpenFile => {
                 let file_path = if let Some(path_arg) = args.get(1) {
@@ -127,7 +131,7 @@ impl Component for ChartExplorerComponent {
                     let file_name = file_path.to_str().unwrap_or_default();
                     return Err(CommandError::InvalidArguments(String::from(file_name)).into());
                 }
-                self.add_chart_from_file(file_path.to_path_buf())?;
+                self.add_chart_from_file(file_path.to_path_buf(), &mut state_borrow)?;
             }
         };
         state_borrow.set_command(None);
