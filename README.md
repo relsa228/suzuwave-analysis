@@ -11,7 +11,7 @@
 
 The application provides a TUI for signal analysis. You can use the vim-like command system to control it. You can switch between different application modes, which gives you access to different functions.
 
-![general usage](https://imgur.com/LqUxs5h)
+![general usage](https://i.imgur.com/LqUxs5h.png)
 
 ### States
 
@@ -30,7 +30,7 @@ To switch between modes, use the following keys:
 
 ### Commands
 
-![commands](https://imgur.com/sBQjmox)
+![commands](https://i.imgur.com/sBQjmox.png)
 
 There are many commands available in the application. We can divide them into several categories:
 
@@ -88,4 +88,4 @@ This is followed by data in 4-byte format, a real number for one discrete signal
 ---
 Enjoy your day with suzu:3
 
-![suzuha](https://imgur.com/a/8IfKAVu)
+![suzuha](https://i.imgur.com/1iPPtpz.gif)
