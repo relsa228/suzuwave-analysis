@@ -1,0 +1,29 @@
+#General
+msrv = "1.89.0"
+
+#Naming
+min-ident-chars-threshold = 3
+allow-exact-repetitions = false
+allowed-idents-below-min-chars = []
+upper-case-acronyms-aggressive = true
+single-char-binding-names-threshold = 2
+
+#Documentation
+lint-commented-code = true
+missing-docs-allow-unused = true
+
+#Forbidden code
+allow-unwrap-in-consts = false
+disallowed-macros = [
+    { path = "std::print", reason = "The use of print or println is forbidden. It is suggested that tracing::info be used instead", replacement = "tracing::info" },
+    { path = "std::println", reason = "The use of print or println is forbidden. It is suggested that tracing::info be used instead", replacement = "tracing::info" },
+]
+
+#Code constraints
+max-struct-bools = 5
+max-trait-bounds = 5
+max-fn-params-bools = 1
+too-many-arguments-threshold = 20
+enum-variant-name-threshold = 10
+enforce-iter-loop-reborrow = true
+check-inconsistent-struct-field-initializers = true
