@@ -2,8 +2,10 @@ use strum_macros::Display;
 use strum_macros::{AsRefStr, EnumString};
 
 #[derive(Debug, EnumString, AsRefStr, PartialEq, Hash, Eq, Clone, Copy, Display)]
+#[derive(Default)]
 pub enum ChartTransform {
     #[strum(serialize = "Standard")]
+    #[default]
     Standard,
 
     #[strum(serialize = "FFT")]
@@ -19,8 +21,3 @@ pub enum ChartTransform {
     Filtered,
 }
 
-impl Default for ChartTransform {
-    fn default() -> Self {
-        ChartTransform::Standard
-    }
-}

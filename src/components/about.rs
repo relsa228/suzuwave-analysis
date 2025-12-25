@@ -12,6 +12,12 @@ pub struct AboutComponent {
     state: AboutState,
 }
 
+impl Default for AboutComponent {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AboutComponent {
     pub fn new() -> Self {
         AboutComponent {

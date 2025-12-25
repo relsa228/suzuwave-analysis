@@ -11,6 +11,12 @@ pub struct AboutState {
     alignment: Alignment,
 }
 
+impl Default for AboutState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AboutState {
     pub fn new() -> Self {
         Self {

@@ -13,6 +13,12 @@ pub struct CommandTableComponent {
     state: CommandTableState,
 }
 
+impl Default for CommandTableComponent {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CommandTableComponent {
     pub fn new() -> Self {
         CommandTableComponent {

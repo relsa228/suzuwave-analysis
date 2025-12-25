@@ -12,6 +12,12 @@ pub struct CommandTableState {
     block_style: Style,
 }
 
+impl Default for CommandTableState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CommandTableState {
     pub fn new() -> Self {
         Self {

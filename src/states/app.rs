@@ -29,6 +29,12 @@ pub struct ApplicationState {
     current_chart_id: usize,
 }
 
+impl Default for ApplicationState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ApplicationState {
     pub fn new() -> Self {
         Self {
@@ -90,11 +96,7 @@ impl ApplicationState {
 
     pub fn set_error(&mut self, error: Option<Error>) -> bool {
         self.mode = ApplicationMode::Error;
-        self.error = if let Some(error) = error {
-            Some(error.to_string())
-        } else {
-            None
-        };
+        self.error = error.map(|error| error.to_string());
         true
     }
 

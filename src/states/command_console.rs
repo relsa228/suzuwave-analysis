@@ -17,6 +17,12 @@ pub struct CommandConsoleState {
     history_cursor: usize,
 }
 
+impl Default for CommandConsoleState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CommandConsoleState {
     pub fn new() -> Self {
         Self {
@@ -39,7 +45,7 @@ impl CommandConsoleState {
     }
 
     // Commands history cache
-    fn to_history_cache(&mut self) {
+    fn to_history_cache_mut(&mut self) {
         if !self.input.is_empty() {
             self.command_history.push(self.input.clone());
         }
@@ -56,12 +62,10 @@ impl CommandConsoleState {
             } else {
                 0
             }
+        } else if self.history_cursor == 0 {
+            self.command_history.len() - 1
         } else {
-            if self.history_cursor == 0 {
-                self.command_history.len() - 1
-            } else {
-                self.history_cursor - 1
-            }
+            self.history_cursor - 1
         };
         self.input = self
             .command_history
@@ -100,7 +104,7 @@ impl CommandConsoleState {
 
     pub fn input_and_flush(&mut self) -> String {
         let input = self.input.clone();
-        self.to_history_cache();
+        self.to_history_cache_mut();
         self.flush_input();
         input
     }
@@ -123,10 +127,8 @@ impl CommandConsoleState {
             if self.cursor_position > 1 {
                 self.cursor_position -= 1;
             }
-        } else {
-            if self.cursor_position < self.input.len() {
-                self.cursor_position += 1;
-            }
+        } else if self.cursor_position < self.input.len() {
+            self.cursor_position += 1;
         }
     }
 

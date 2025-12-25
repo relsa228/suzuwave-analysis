@@ -7,6 +7,12 @@ pub struct ChartViewStyle {
     pub canvas_steps: u32,
 }
 
+impl Default for ChartViewStyle {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ChartViewStyle {
     pub fn new() -> Self {
         Self {

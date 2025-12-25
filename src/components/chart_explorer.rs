@@ -45,7 +45,7 @@ impl ChartExplorerComponent {
         let mut file_parsers: HashMap<FileType, Box<dyn FileReadOnly>> = HashMap::new();
         file_parsers.insert(FileType::Vibric, Box::new(VibricReadingClient::new()));
         let instance = Self {
-            file_parsers: file_parsers,
+            file_parsers,
             app_state,
             list_state: ListState::default(),
         };
@@ -74,7 +74,7 @@ impl ChartExplorerComponent {
         };
         let parser = self
             .file_parsers
-            .get(&FileType::from_str(&extension)?)
+            .get(&FileType::from_str(extension)?)
             .ok_or(FileError::UnsupportedType)?;
         let data = parser.parse_signal_file(path.to_str().ok_or(FileError::PathParseError)?, 0)?;
         state.add_chart(data);

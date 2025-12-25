@@ -21,6 +21,12 @@ pub struct ChartProcessingService {
     planner: FftPlanner<f64>,
 }
 
+impl Default for ChartProcessingService {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ChartProcessingService {
     pub fn new() -> Self {
         Self {
@@ -50,10 +56,8 @@ impl ChartProcessingService {
 
         let mut shifted = vec![Complex::new(0.0, 0.0); n];
         let half = n / 2;
-        for i in 0..half {
-            shifted[i] = buffer[i + half];
-            shifted[i + half] = buffer[i];
-        }
+        shifted[..half].copy_from_slice(&buffer[half..(half + half)]);
+        shifted[half..(half + half)].copy_from_slice(&buffer[..half]);
 
         Ok(shifted
             .iter()
@@ -92,8 +96,8 @@ impl ChartProcessingService {
         let y: Vec<f32> = chart.data.iter().map(|point| point.y as f32).collect();
         let window = hann(window_size);
         let fft = vec![Complex32::new(0.0, 0.0); window.len()];
-        let mut frames = vec![fft; (y.len() + hop_size - 1) / hop_size];
-        if let Err(_) = stft(&y, &window, hop_size, &mut frames[..]) {
+        let mut frames = vec![fft; y.len().div_ceil(hop_size)];
+        if stft(&y, &window, hop_size, &mut frames[..]).is_err() {
             return Err(anyhow!(ChartProcessingError::StftError));
         }
 

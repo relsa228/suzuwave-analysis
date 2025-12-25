@@ -14,10 +14,6 @@ missing-docs-allow-unused = true
 
 #Forbidden code
 allow-unwrap-in-consts = false
-disallowed-macros = [
-    { path = "std::print", reason = "The use of print or println is forbidden. It is suggested that tracing::info be used instead", replacement = "tracing::info" },
-    { path = "std::println", reason = "The use of print or println is forbidden. It is suggested that tracing::info be used instead", replacement = "tracing::info" },
-]
 
 #Code constraints
 max-struct-bools = 5

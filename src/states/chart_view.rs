@@ -10,6 +10,12 @@ pub struct ChartViewState {
     canvas_style: ChartViewStyle,
 }
 
+impl Default for ChartViewState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ChartViewState {
     pub fn new() -> Self {
         Self {

@@ -20,6 +20,12 @@ use crate::{
 
 pub struct VibricReadingClient;
 
+impl Default for VibricReadingClient {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl VibricReadingClient {
     pub fn new() -> Self {
         VibricReadingClient
@@ -50,7 +56,7 @@ impl VibricReadingClient {
         let mut reader = BufReader::new(File::open(path)?);
         let mut signature = [0u8; 4];
         reader.read_exact(&mut signature)?;
-        if &signature != VIBRIC_SIGNATURE {
+        if signature != VIBRIC_SIGNATURE {
             return Err(FileError::VibricSignature.into());
         }
 

@@ -10,6 +10,12 @@ pub struct CommandConsoleStyle {
     pub border_color: Color,
 }
 
+impl Default for CommandConsoleStyle {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CommandConsoleStyle {
     pub fn new() -> Self {
         Self {
