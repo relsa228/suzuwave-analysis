@@ -1,4 +1,4 @@
-# Suzuwave Analysis
+# Suzuwave Analysis 💫
 
 `Suzuwave` (or `Suzuha Signal Analysis`) is an opensource lightweight analysis tool for various (I hope so) types of signal files. In this environment you've able to perform a set of analysis operations such as
 
@@ -10,6 +10,8 @@
 ## Usage
 
 The application provides a TUI for signal analysis. You can use the vim-like command system to control it. You can switch between different application modes, which gives you access to different functions.
+
+![general usage](https://imgur.com/LqUxs5h)
 
 ### States
 
@@ -27,6 +29,9 @@ To switch between modes, use the following keys:
 - `esc`: Return to Static Mode
 
 ### Commands
+
+![commands](https://imgur.com/sBQjmox)
+
 There are many commands available in the application. We can divide them into several categories:
 
 #### General commands
@@ -82,3 +87,5 @@ This is followed by data in 4-byte format, a real number for one discrete signal
 
 ---
 Enjoy your day with suzu:3
+
+![suzuha](https://imgur.com/a/8IfKAVu)
